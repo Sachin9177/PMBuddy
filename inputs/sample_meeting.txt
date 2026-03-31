@@ -1,0 +1,33 @@
+Meeting: Checkout Flow Improvement
+Date: March 31, 2026
+Attendees: Priya (PM), Dev (Engineering Lead), Sara (Designer), Karan (Frontend Dev)
+
+---
+
+ok so Priya started the meeting, said we need to talk about the checkout drop-off rates. apparently we're seeing like 62% drop-off at the payment step which is way too high. she pulled it from the analytics dashboard.
+
+Dev asked if we know where exactly people are dropping — is it before entering card details or after. Priya said she thinks it's after they see the order summary but wasn't 100% sure. needs to verify.
+
+Sara shared some screens she'd been working on. basically she wants to simplify the checkout to 2 steps instead of 4. right now it's: cart → address → payment → review. she wants to combine address + payment on one screen and remove the separate review page, just show a summary inline.
+
+Dev seemed hesitant. said the address and payment on one screen might be tricky with the current form validation setup. Karan agreed, said it's doable but will need some refactoring, maybe 2-3 days of work.
+
+Priya asked if we can at least do a quick win in the meantime — like fixing the CTA button. apparently it says "Proceed" which is vague. Sara said yes that's an easy change, she can update the designs today. Karan said that's like a 30 min fix once he gets the updated designs.
+
+There was some confusion about whether we're also changing the mobile layout or just desktop. Sara thought mobile too, Dev said let's do desktop first and validate. Priya agreed — desktop first, mobile in the next iteration.
+
+Someone (might have been Karan?) brought up that the payment gateway sometimes shows an error that's not user-friendly — something like "ERR_TRANSACTION_DECLINED_422". Dev said that's a known issue, they've been meaning to fix the error message mapping for a while. Priya said that should definitely go in this sprint.
+
+Sara asked about guest checkout — right now users have to create an account to buy. she said that's probably killing conversions. Priya said that's a bigger discussion, we don't have alignment on that yet from the business side. tabled for now but needs a decision soon.
+
+Dev raised a concern — if we're changing the checkout flow, we need to make sure the order confirmation emails still trigger correctly. there's a webhook dependency on the payment step that could break if we restructure the page flow. Karan said he'll look into it.
+
+Priya said she'll set up a follow-up in two weeks to review the designs and see where engineering is. Also mentioned she needs to share the updated flow with the Head of Product before we go too far.
+
+Meeting ended a bit abruptly, Karan had another call.
+
+Open stuff that wasn't fully resolved:
+- exactly where in the payment step are users dropping off (need data)
+- guest checkout decision — business hasn't weighed in
+- mobile timeline not confirmed
+- does the new 2-step design need a usability test before we build?

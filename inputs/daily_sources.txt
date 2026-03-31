@@ -1,0 +1,7 @@
+# Add one URL per line
+# Lines starting with # are ignored
+
+https://www.lennysnewsletter.com/
+https://a16z.com/
+https://producthunt.com/
+https://stripe.com/blog

@@ -1,0 +1,13 @@
+Feature: Booking Agent Automation
+
+We want to automate the entire booking process for the transportation company. Currently bookng reqursts come from multiple sources like email, voice chat or sms. A ops manager manually checks these sources extracts booking information , asks for any clarifications needed and finally proceeds to book once all the booking information is received. This leads to a lot of time and bandwidth 
+Target users: Operational team
+
+Key needs:
+- AI agent based solution
+- Extract informtion from multiple sources and ensure relevant information is received-
+- Ask for clarifications if certain information are missing
+- End with confirmation 
+
+Priority: High
+Timeline: Q2 2026
