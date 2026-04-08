@@ -1,7 +1,30 @@
 # Add one URL per line
 # Lines starting with # are ignored
-
-https://www.lennysnewsletter.com/
 https://a16z.com/
-https://producthunt.com/
+
+# Tech News
+https://techcrunch.com/
+https://www.theverge.com/tech
+https://news.ycombinator.com/
+https://arstechnica.com/
+https://www.wired.com/
+
+# Product & PM
+https://www.lennysnewsletter.com/
+https://review.firstround.com/
+https://www.mindtheproduct.com/
+
+# Product Launches
+https://www.producthunt.com/
+
+# Company Blogs
 https://stripe.com/blog
+https://shopify.engineering
+https://netflixtechblog.com/
+https://openai.com/blog
+
+# Engineering / Systems
+https://blog.pragmaticengineer.com/
+
+# UX / Growth
+https://www.nngroup.com/articles/

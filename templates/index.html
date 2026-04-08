@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PMBuddy — {{ tool.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+
+    <div class="layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">PMBuddy</div>
+
+            {% for category in categories %}
+            <div class="category">
+                <div class="category-name">{{ category.name }}</div>
+                {% for tool_id in category.tools %}
+                <a
+                    href="/?tool={{ tool_id }}"
+                    class="tool-link {% if tool_id == active_tool_id %}active{% endif %}"
+                >
+                    {{ tools[tool_id].name }}
+                    {% if not tools[tool_id].prompt %}
+                    <span class="badge">Soon</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </aside>
+
+        <!-- Main content -->
+        <main class="main">
+            <h1>{{ tool.name }}</h1>
+
+            {% if tool.prompt %}
+            <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form">
+
+                {% if active_tool_id == "digest" %}
+
+                <!-- Digest: show a prompt banner and a small optional input -->
+                <div class="digest-banner">
+                    <span class="digest-banner-icon">📰</span>
+                    <div>
+                        <p class="digest-banner-title">Click <strong>Generate</strong> to fetch the latest product news and insights.</p>
+                        <p class="digest-banner-sub">Pulls from TechCrunch, Product Hunt, a16z, The Verge, and more.</p>
+                    </div>
+                </div>
+
+                <textarea
+                    name="user_input"
+                    rows="3"
+                    placeholder="{{ tool.placeholder }}"
+                >{{ user_input }}</textarea>
+
+                {% else %}
+
+                <textarea
+                    name="user_input"
+                    rows="10"
+                    placeholder="{{ tool.placeholder }}"
+                >{{ user_input }}</textarea>
+
+                {% endif %}
+
+                <button type="submit" id="submit-btn">Generate</button>
+            </form>
+
+            <!-- Loading state (only shown during digest fetch via JS) -->
+            <div id="loading-state" class="loading-state" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p id="loading-msg">Fetching latest sources...</p>
+            </div>
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            {% if output %}
+            <div class="output">
+                <div class="output-label">Output</div>
+
+                {% if active_tool_id == "digest" %}
+                <!-- Digest output: rendered as article-style HTML via marked.js -->
+                <div
+                    class="output-box digest-output"
+                    id="digest-output"
+                    data-raw="{{ output | e }}"
+                ></div>
+                {% else %}
+                <div class="output-box">{{ output }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="coming-soon">
+                <p>This tool is coming soon.</p>
+            </div>
+            {% endif %}
+        </main>
+
+    </div>
+
+    <!-- marked.js: only loaded on digest page to render markdown output -->
+    {% if active_tool_id == "digest" %}
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    {% endif %}
+
+    <script>
+        // ── Digest: render markdown output ────────────────────────
+        const digestOutput = document.getElementById("digest-output");
+        if (digestOutput && typeof marked !== "undefined") {
+            const raw = digestOutput.dataset.raw;
+            digestOutput.innerHTML = marked.parse(raw);
+        }
+
+        // ── Digest: show loading state on form submit ─────────────
+        const isDigest = {{ "true" if active_tool_id == "digest" else "false" }};
+
+        if (isDigest) {
+            const form       = document.getElementById("main-form");
+            const submitBtn  = document.getElementById("submit-btn");
+            const loadingEl  = document.getElementById("loading-state");
+            const loadingMsg = document.getElementById("loading-msg");
+
+            form.addEventListener("submit", function () {
+                // Disable button so it can't be clicked twice
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Working...";
+
+                // Show loading block
+                loadingEl.style.display = "flex";
+
+                // After ~8 seconds, assume fetch is done and Claude is running
+                setTimeout(function () {
+                    loadingMsg.textContent = "Generating digest...";
+                }, 8000);
+            });
+        }
+    </script>
+
+</body>
+</html>

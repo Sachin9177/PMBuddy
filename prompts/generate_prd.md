@@ -74,25 +74,8 @@ Define measurable success criteria:
 
 ---
 
-### 10. Prioritization Rationale
-- Why should this be built now vs. later?
-- What is the impact (high/medium/low) and why?
-- What is the effort (high/medium/low) and why?
-- What is the risk of not doing it now?
-
----
-
-### 11. MVP Scope
-**Included in v1:**
-- List only what is essential to validate the core problem
-
-**Excluded for now (future phases):**
-- List what is intentionally deferred and briefly why
-
----
-
 ## INSTRUCTIONS:
 - Be structured and clear
 - Avoid vague statements
-- Think like a senior PM
+- Think like a senior/Lead PM
 - Make the output actionable and realistic
