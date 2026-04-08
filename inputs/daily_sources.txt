@@ -1,30 +1,28 @@
-# Add one URL per line
-# Lines starting with # are ignored
-https://a16z.com/
+# PMBuddy Daily Digest — Source Configuration
+# Lines starting with # are comments and are ignored
+# Add PRODUCTHUNT_API_KEY below to enable Product Hunt launches
 
-# Tech News
-https://techcrunch.com/
-https://www.theverge.com/tech
-https://news.ycombinator.com/
-https://arstechnica.com/
-https://www.wired.com/
+# API Keys (replace with your actual keys)
+PRODUCTHUNT_API_KEY=YO12vSZMWYWEpxlvXw6rBg8r7FbhvlK_YfCibzKiVNk
 
-# Product & PM
-https://www.lennysnewsletter.com/
-https://review.firstround.com/
-https://www.mindtheproduct.com/
+# Tech News (RSS feeds — fetched in real-time)
+https://techcrunch.com/feed/
+https://www.theverge.com/rss/index.xml
+https://feeds.arstechnica.com/arstechnica/index
+https://www.wired.com/feed/rss
 
-# Product Launches
-https://www.producthunt.com/
+# Product & PM (RSS feeds)
+https://www.lennysnewsletter.com/feed
+https://www.producttalk.org/feed/
 
-# Company Blogs
-https://stripe.com/blog
-https://shopify.engineering
-https://netflixtechblog.com/
-https://openai.com/blog
+# Company Blogs (RSS feeds)
+https://stripe.com/blog/feed.rss
+https://medium.com/feed/netflix-techblog
+https://openai.com/blog/rss.xml
+https://engineering.atspotify.com/feed/
 
-# Engineering / Systems
-https://blog.pragmaticengineer.com/
+# Engineering / Systems (RSS feeds)
+https://blog.pragmaticengineer.com/rss/
 
-# UX / Growth
-https://www.nngroup.com/articles/
+# UX / Growth (RSS feeds)
+https://www.nngroup.com/feed/rss/

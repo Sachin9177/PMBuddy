@@ -1,0 +1,65 @@
+---
+
+### 📰 1. Tech News (Top 5)
+
+**Project Glasswing: Anthropic rallies Apple, Google, and 45+ orgs to secure AI-era software**
+Source: [Wired](https://www.wired.com/story/anthropic-mythos-preview-project-glasswing/)
+Anthropic launched Project Glasswing — a cross-industry coalition using the new Claude Mythos Preview model to find and fix software vulnerabilities before bad actors do. This isn't a PR play; it's a structured attempt to make frontier AI a defensive security tool at industry scale. For PMs building on AI infrastructure, this will shape what "secure by design" actually means within 18 months.
+
+**Google quietly shipped an offline-first AI dictation app for iOS**
+Source: [TechCrunch](https://techcrunch.com/2026/04/07/google-quietly-releases-an-offline-first-ai-dictation-app-on-ios/)
+Google released an iOS dictation app powered by on-device Gemma models — no data leaves the phone. Direct competition with Wispr Flow and similar AI voice tools. The quiet launch signals controlled PMF testing before a wider push. Offline-first AI is becoming a real differentiator for enterprise and privacy-sensitive use cases, not a niche request.
+
+**GitHub dropped to ~90% uptime as AI coding agent traffic overwhelmed its infrastructure**
+Source: [Pragmatic Engineer](https://blog.pragmaticengineer.com/the-pulse-is-github-still-best-for-ai-native-development/)
+GitHub hit roughly one-nine availability — partly because it wasn't built to absorb traffic from AI coding agents running at scale. Combined with no active CEO and unclear strategy, this is a platform risk for teams who've built CI/CD or Copilot workflows on top of it. PMs leading developer tooling decisions should stress-test this dependency now, not after an outage hits a sprint.
+
+**Stripe: AI agents are showing up as actual checkout actors in live conversion data**
+Source: [Stripe Blog](https://stripe.com/blog/global-checkout-trends)
+Stripe's analysis of 20K+ businesses found that AI agents and digital wallets are materially shifting checkout behavior — agents completing purchases autonomously is no longer theoretical. The funnel model is changing: your "user" may increasingly be software, not a person. PMs in commerce or fintech need to start asking what trust signals and API compatibility their checkout surfaces expose.
+
+**OpenAI added pay-as-you-go pricing to Codex for Business and Enterprise teams**
+Source: [OpenAI Blog](https://openai.com/index/codex-flexible-pricing-for-teams)
+Codex now offers usage-based pricing alongside subscriptions for ChatGPT Business and Enterprise — lowering the activation barrier for teams that want to experiment before committing. It's a textbook PLG unlock applied to enterprise AI tooling, and it signals OpenAI is competing on adoption ease, not just raw capability. Watch for downstream pressure on GitHub Copilot's pricing model.
+
+---
+
+### 📘 2. Product Case Study
+
+**Stripe Radar — one-click free trial abuse prevention**
+
+- **Company:** Stripe
+- **What they did:** Added a single toggle to Stripe Radar that detects and blocks free trial abuse — repeated signups, missed cancellations — with 90% accuracy, shipped in Q1 2026
+- **Why it worked:** Individual businesses don't have enough signal to train this accurately. Stripe does — it sees behavior patterns across millions of merchants. They packaged that cross-network intelligence into a zero-config on/off switch instead of a configuration panel, which meant teams actually turned it on
+- **PM takeaway:** When your platform has cross-customer data that no single customer can replicate, the product move is to surface that signal as a default-off toggle — not a settings wizard. The accuracy is the moat; the UX is what determines whether the moat gets used
+
+---
+
+### 🧠 3. PM Framework / Concept
+
+**Boring Tech in Production**
+
+- **Name:** Boring Tech > Exciting Tech (under failure conditions)
+- **The idea:** Choose proven, understood technology over technically superior alternatives when the cost of a 3am production failure is real
+- **When to use it:** When evaluating infrastructure, languages, or frameworks for systems where downtime has business consequences — not in a prototype or greenfield experiment
+- **Example:** The Dev.to piece on Go vs. Rust references a $3.2M production disaster tied to choosing technical excellence over operational predictability. Go's smaller cognitive overhead, staffing availability, and debuggability at 2am outweighed Rust's performance profile when things went wrong. The lesson isn't "avoid Rust" — it's that production systems are maintained by rotating humans under stress, and that constraint should dominate the decision
+
+---
+
+### 🔥 4. Key Trend / Insight
+
+**Agentic commerce: the checkout "user" is increasingly not human**
+
+- **The trend:** AI agents are beginning to complete purchases autonomously on behalf of users — searching, comparing, and transacting without the user ever visiting a product page. Conversion optimization is shifting from human UX to agent legibility and API trust signals
+- **Why it matters now:** Stripe's 2026 checkout analysis explicitly names agents as a new checkout surface in live data — not in a roadmap or prediction. Twelve months ago this was a keynote talking point. Today it's showing up in merchant conversion reports
+- **Example:** Stripe's Shoptalk 2026 recap highlights retailers actively grappling with "embedded checkout on third-party surfaces" — where the user never touches the merchant's site. The PM question shifts from "how do we reduce cart abandonment?" to "how do we make our product trustworthy and legible to an agent making decisions on someone else's behalf?"
+
+---
+
+### ⚡ 5. Practical Tip
+
+**Use AI to draft your user surveys — then audit each question manually before sending**
+
+- **The tip:** Let AI generate the full survey draft (saves ~60% of the writing time), then review every question against three checks: (1) Is it leading? (2) Does it assume the behavior you're trying to validate? (3) Can it be read two different ways by two different users?
+- **When to use it:** Any time you're designing a survey under time pressure — especially when the AI draft looks clean and complete, because that's exactly when you'll skip the review
+- **Why it works:** NNGroup's 2026 analysis found that AI produces grammatically polished surveys that still contain double-barreled questions, social desirability bias, and ambiguous scales — flaws that are invisible to a quick skim but corrupt your data. The failure mode isn't a bad-looking survey; it's a confident, wrong conclusion that drives a real roadmap decision

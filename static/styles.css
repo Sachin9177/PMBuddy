@@ -233,6 +233,67 @@ button[type="submit"]:active {
     font-weight: 500;
 }
 
+/* ─── Digest topbar ─────────────────────────────────── */
+
+.digest-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    flex-wrap: wrap;
+}
+
+.digest-history-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.digest-date-tab {
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.digest-date-tab:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.digest-date-tab.active {
+    background: #1d4ed8;
+    color: #ffffff;
+    border-color: #1d4ed8;
+    font-weight: 600;
+}
+
+.digest-no-history {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.digest-topbar form {
+    margin: 0;
+}
+
+.digest-topbar button[type="submit"] {
+    margin: 0;
+    white-space: nowrap;
+}
+
 /* ─── Digest banner ──────────────────────────────────── */
 
 .digest-banner {
@@ -295,67 +356,189 @@ button[type="submit"]:active {
     to { transform: rotate(360deg); }
 }
 
-/* ─── Digest article output ───────────────────────────── */
+/* ─── Digest newspaper layout ────────────────────────── */
 
-.digest-output {
-    white-space: normal;           /* override pre-wrap from .output-box */
-    font-size: 0.9rem;
-    line-height: 1.75;
+/* Centered reading column */
+.digest-newspaper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1100px;
+    margin: 8px auto 0;
 }
 
-.digest-output h3 {
-    font-size: 1rem;
+/* Base section card */
+.ds-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left-width: 4px;
+    border-radius: 14px;
+    padding: 28px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Section accent colors via left border */
+.ds-tech-news  { border-left-color: #3b82f6; }
+.ds-launches   { border-left-color: #f59e0b; }
+.ds-case-study { border-left-color: #6366f1; }
+.ds-framework  { border-left-color: #8b5cf6; }
+.ds-insight    { border-left-color: #f97316; }
+.ds-tip        { border-left-color: #10b981; }
+.ds-generic    { border-left-color: #cbd5e1; }
+
+/* Section heading */
+.ds-section-title {
+    font-size: 1.05rem;
     font-weight: 700;
     color: #0f172a;
-    margin: 28px 0 10px;
-    padding-bottom: 8px;
+    letter-spacing: -0.01em;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #f1f5f9;
 }
 
-.digest-output h3:first-child {
-    margin-top: 0;
-}
-
-.digest-output p {
-    margin: 8px 0;
+/* Body text — shared by all non-news sections */
+.ds-body {
+    font-size: 0.925rem;
+    line-height: 1.8;
     color: #1e293b;
 }
 
-.digest-output strong {
-    font-weight: 600;
-    color: #0f172a;
-}
+.ds-body p       { margin: 8px 0; }
+.ds-body ul      { margin: 10px 0 10px 22px; }
+.ds-body li      { margin: 6px 0; }
+.ds-body strong  { font-weight: 600; color: #0f172a; }
 
-.digest-output ul {
-    margin: 8px 0 8px 20px;
-}
-
-.digest-output li {
-    margin: 5px 0;
-    color: #1e293b;
-}
-
-.digest-output a {
+.ds-body a {
     color: #1d4ed8;
     text-decoration: none;
 }
+.ds-body a:hover { text-decoration: underline; }
 
-.digest-output a:hover {
-    text-decoration: underline;
+/* Tech News: 2-column grid */
+.ds-news-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
 }
 
-.digest-output hr {
-    border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 24px 0;
+.ds-news-card {
+    background: #f8fafc;
+    border: 1px solid #e8edf2;
+    border-radius: 10px;
+    padding: 16px 20px;
+    line-height: 1.7;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 130px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.digest-output code {
-    background: #f1f5f9;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 0.82rem;
-    font-family: "Menlo", "Consolas", monospace;
+.ds-news-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+/* Clickable headline link */
+.ds-news-headline {
+    display: block;
+    text-decoration: none;
+    margin-bottom: 6px;
+}
+
+.ds-news-headline strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+    transition: color 0.12s ease;
+}
+
+.ds-news-headline:hover strong {
+    color: #1d4ed8;
+}
+
+.ds-news-card p      { margin: 4px 0; font-size: 0.825rem; flex: 1; }
+.ds-news-card strong { font-weight: 600; color: #0f172a; }
+
+/* Source and other links inside the card */
+.ds-news-card a:not(.ds-news-headline) {
+    color: #1d4ed8;
+    font-size: 0.8rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+.ds-news-card a:not(.ds-news-headline):hover { text-decoration: underline; }
+
+/* Responsive: single column on narrow screens */
+@media (max-width: 720px) {
+    .ds-news-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Product Launches grid ──────────────────────────── */
+
+.ds-launch-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.ds-launch-card {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ds-launch-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.ds-launch-name {
+    text-decoration: none;
+}
+
+.ds-launch-name strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    transition: color 0.12s ease;
+}
+
+.ds-launch-name:hover strong {
+    color: #d97706;
+}
+
+.ds-launch-card p {
+    font-size: 0.78rem;
+    color: #78716c;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.ds-launch-card a:not(.ds-launch-name) {
+    color: #d97706;
+    font-size: 0.75rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+@media (max-width: 900px) {
+    .ds-launch-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* ─── Coming soon ────────────────────────────────────── */

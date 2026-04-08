@@ -1,0 +1,101 @@
+---
+
+### 📰 1. Tech News (Top 10)
+
+**Anthropic launches Project Glasswing with Claude Mythos — and finds bugs in every major OS and browser**
+Source: [The Verge](https://www.theverge.com/ai-artificial-intelligence/908114/anthropic-project-glasswing-cybersecurity)
+Anthropic unveiled Project Glasswing, a cybersecurity initiative pairing a new Claude Mythos Preview model with 45+ partners including Apple, Google, Nvidia, AWS, and Microsoft to find and fix vulnerabilities at scale. The model already surfaced security issues across every major operating system and web browser — before public release — which reframes AI from threat vector to active defense layer.
+
+**Anthropic grew from $1B to $19B ARR in 14 months**
+Source: [Lenny's Newsletter](https://www.lennysnewsletter.com/p/anthropics-1b-to-19b-growth-run)
+Anthropic's Head of Growth shared how the company scaled 19x in revenue in just over a year, driven by big bets, intentional onboarding friction, and an internal AI system called CASH for autonomous growth experimentation. For PMs, intentional friction as a growth lever is a pattern worth examining — especially when it forces users toward higher-value activation paths.
+
+**GitHub drops to ~90% availability as AI coding agents overwhelm the platform**
+Source: [Pragmatic Engineer](https://blog.pragmaticengineer.com/the-pulse-is-github-still-best-for-ai-native-development/)
+GitHub's uptime has fallen to one nine (~90%), partly due to traffic spikes from AI coding agents — plus no CEO and a lack of apparent product direction. For PMs at companies where CI/CD reliability is load-bearing, this is a dependency risk worth tracking now, not after an incident.
+
+**Google AI Overviews is wrong roughly 10% of the time**
+Source: [Ars Technica](https://arstechnica.com/google/2026/04/analysis-finds-google-ai-overviews-is-wrong-10-percent-of-the-time/)
+An independent analysis found Google's AI Overviews surfaces incorrect answers in about 1 in 10 queries — a figure that scales to millions of misleading responses per hour at search volume. For any PM building AI-powered answer surfaces, this sets a concrete public benchmark for what "good enough" accuracy actually looks like in the market.
+
+**Google quietly ships an offline-first AI dictation app**
+Source: [TechCrunch](https://techcrunch.com/2026/04/07/google-quietly-releases-an-offline-first-ai-dictation-app-on-ios/)
+Google released a Gemma-powered dictation app for iOS that runs entirely on-device, no network required — a direct shot at Wispr Flow and similar tools. The "quiet launch" pattern here is worth noting: Google is testing product-market fit in voice AI without a flagship announcement, which often signals a broader platform play incoming.
+
+**Stripe data: AI agents and digital wallets are actively rewriting checkout conversion**
+Source: [Stripe Blog](https://stripe.com/blog/global-checkout-trends)
+Stripe analyzed 20,000+ businesses and found that agent-initiated purchases and digital wallet adoption are now measurably shifting checkout conversion rates — not as future projection but current behavior. PMs owning payments or commerce flows should treat agentic checkout as a first-class user scenario, not an edge case.
+
+**VC Eclipse raises $1.3B to back and build physical AI startups**
+Source: [TechCrunch](https://techcrunch.com/2026/04/07/vc-eclipse-has-a-new-1-3b-to-back-and-build-physical-ai-startups/)
+Eclipse will use the fund to both invest in and incubate physical AI companies — robotics, manufacturing, infrastructure — not just cut checks. This signals that the "build it yourself" VC model is moving into hardware-adjacent AI, which historically precedes a wave of new platform companies needing software product layers.
+
+**Apple's foldable iPhone reportedly on track for September**
+Source: [TechCrunch](https://techcrunch.com/2026/04/07/apples-foldable-iphone-is-on-track-to-launch-in-september-report-says/)
+After engineering test concerns earlier, Nikkei Asia and TechCrunch now report the foldable iPhone is back on schedule for a September launch. PMs building mobile-first products should start stress-testing layouts and interaction models for larger, flexible displays — Apple's launch will fast-follow with developer pressure.
+
+**OpenAI raises $122 billion in new funding**
+Source: [OpenAI Blog](https://openai.com/index/accelerating-the-next-phase-ai)
+OpenAI closed a $122B round to expand frontier AI globally, scale compute, and meet enterprise demand for ChatGPT, Codex, and their agent infrastructure. At this scale, OpenAI is no longer a model provider — it's building the infrastructure layer that will define what "enterprise AI" means for the next decade.
+
+**Chrome ships vertical tabs and immersive Reading Mode**
+Source: [TechCrunch](https://techcrunch.com/2026/04/07/chrome-is-finally-getting-vertical-tabs/)
+Google Chrome's latest update adds vertical tab management and a full Reading Mode — features long-requested by power users and previously only available in Arc, Edge, or via extensions. This narrows the UX gap that drove millions of users to alternative browsers, a reminder that incumbents eventually ship what the challengers built their moat on.
+
+---
+
+### 🚀 2. New Product Launches
+
+**Velo**
+Share anything as video messages · 164 votes
+Turns any content into async video messages — useful for PMs who need to communicate context-rich decisions to distributed teams without scheduling a call.
+
+**Flint**
+Launch on-brand pages for every campaign, ad, and prospect · 119 votes
+Generates targeted landing pages per campaign or prospect segment — directly relevant for PMs running go-to-market experiments where generic landing pages kill conversion signal.
+
+**MindsDB Anton**
+Business intelligence that doesn't just answer — it acts · 92 votes
+Moves BI from reporting to autonomous action, closing the loop between insight and execution — a pattern PMs should watch as it redefines what "data-driven decisions" means operationally.
+
+**FeatDrop**
+Public changelog for builders to share product updates · 82 votes
+A dedicated changelog tool for indie builders and teams — fills the gap between shipping and telling users what changed, which most products handle poorly.
+
+**Browser Arena**
+Open-source benchmarks for cloud browser infrastructure · 90 votes
+Standardizes how cloud browser performance is measured — useful for PMs evaluating web scraping, automation, or agent infrastructure vendors where "fast" has meant nothing quantifiable until now.
+
+---
+
+### 📘 3. Product Case Study
+
+- **Company:** Stripe
+- **What they did:** In March 2026, Stripe added a one-click free trial abuse detection feature to Stripe Radar. When enabled, the model flags abusive trial behaviors — repeated signups, missed cancellations — with 90% accuracy. This came after Stripe's own data showed a 6.2x spike in detected abusive free trials across its network between November 2025 and February 2026.
+- **Why it worked:** Rather than requiring businesses to write custom fraud rules (which most don't), Stripe operationalized the detection directly into the existing Radar flow. The key was reducing activation cost to near zero — one click — while anchoring the feature on a documented network-wide trend, which gave businesses immediate context for why they needed it.
+- **PM takeaway:** When you have network-level data showing a problem your users don't yet know they have, lead with the data first — the feature adoption follows. "We saw 6.2x more abuse" is a better hook than "new fraud feature."
+
+---
+
+### 🧠 4. PM Framework / Concept
+
+- **Name:** Design Process Compression
+- **The idea:** AI doesn't eliminate design steps — it compresses the time between them, which means inexperienced practitioners skip judgment calls they don't know they're making.
+- **When to use it:** When your team starts using AI tools to go from "idea" to "shipped UI" in hours and you're seeing more rework, user confusion, or inconsistency than before.
+- **Example:** A PM uses an AI design tool to generate five landing page variants in 30 minutes. The variants look polished, so they ship without user testing. Three weeks later, a usability session reveals that users can't tell what the product does on any of them — the AI produced aesthetically coherent but semantically unclear layouts. The problem wasn't the tool; it was skipping the "what problem does this screen solve?" step that experienced designers do automatically and AI cannot infer from a prompt.
+
+---
+
+### 🔥 5. Key Trend / Insight
+
+- **The trend:** AI models are shifting from productivity assistants to autonomous infrastructure — running security audits, generating thousands of PRs per week, and initiating commerce transactions without human prompts.
+- **Why it matters now:** Twelve months ago, "AI in the workflow" meant autocomplete and summarization. Today, Stripe is documenting agent-initiated purchases as a measurable checkout segment, Stripe's own internal coding agents ship 1,300 PRs per week, and Anthropic's Mythos model is autonomously finding vulnerabilities across production operating systems. The shift is from AI as a writing tool to AI as an actor with system access.
+- **Example:** Stripe's Machine Payments Protocol (MPP), launched in March 2026, is an open standard for agents to pay — not humans using AI, but AI initiating payment on behalf of goals. This is not a future scenario; Stripe businesses can accept MPP payments today in a few lines of code.
+
+---
+
+### ⚡ 6. Practical Tip
+
+- **The tip:** Before handing any discovery, survey, or research task to an AI tool, write down the three methodological failure modes specific to that method — then explicitly check for them in the AI's output.
+- **When to use it:** Whenever you use AI to draft surveys, synthesize user research, plan interview guides, or generate analytics queries.
+- **Why it works:** NNGroup's research found that AI produces polished survey drafts that contain subtle design flaws — leading questions, poorly ordered scales, ambiguous response options — that weaken data quality in ways that aren't visible without method-specific expertise. The failure mode isn't that AI is wrong; it's that AI output looks authoritative, so the review step gets skipped. Naming the three failure modes before you start forces the review to happen even when the output looks clean.

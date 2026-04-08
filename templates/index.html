@@ -40,37 +40,39 @@
             <h1>{{ tool.name }}</h1>
 
             {% if tool.prompt %}
-            <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form">
 
                 {% if active_tool_id == "digest" %}
 
-                <!-- Digest: show a prompt banner and a small optional input -->
-                <div class="digest-banner">
-                    <span class="digest-banner-icon">📰</span>
-                    <div>
-                        <p class="digest-banner-title">Click <strong>Generate</strong> to fetch the latest product news and insights.</p>
-                        <p class="digest-banner-sub">Pulls from TechCrunch, Product Hunt, a16z, The Verge, and more.</p>
+                <!-- Digest: header bar with history tabs + generate button -->
+                <div class="digest-topbar">
+                    <div class="digest-history-tabs">
+                        {% for d in digest_dates %}
+                        <a href="/?tool=digest&date={{ d }}"
+                           class="digest-date-tab {% if d == active_digest_date %}active{% endif %}">
+                            {{ format_date_label(d) }}
+                        </a>
+                        {% endfor %}
+                        {% if not digest_dates %}
+                        <span class="digest-no-history">No digests yet</span>
+                        {% endif %}
                     </div>
+                    <form method="POST" action="/?tool=digest" id="main-form">
+                        <button type="submit" id="submit-btn">Generate Today's Digest</button>
+                    </form>
                 </div>
-
-                <textarea
-                    name="user_input"
-                    rows="3"
-                    placeholder="{{ tool.placeholder }}"
-                >{{ user_input }}</textarea>
 
                 {% else %}
 
+                <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form">
                 <textarea
                     name="user_input"
                     rows="10"
                     placeholder="{{ tool.placeholder }}"
                 >{{ user_input }}</textarea>
+                <button type="submit" id="submit-btn">Generate</button>
+                </form>
 
                 {% endif %}
-
-                <button type="submit" id="submit-btn">Generate</button>
-            </form>
 
             <!-- Loading state (only shown during digest fetch via JS) -->
             <div id="loading-state" class="loading-state" style="display: none;">
@@ -84,16 +86,12 @@
 
             {% if output %}
             <div class="output">
-                <div class="output-label">Output</div>
-
                 {% if active_tool_id == "digest" %}
-                <!-- Digest output: rendered as article-style HTML via marked.js -->
-                <div
-                    class="output-box digest-output"
-                    id="digest-output"
-                    data-raw="{{ output | e }}"
-                ></div>
+                <!-- Digest: raw output passed via script tag to avoid attribute newline issues -->
+                <script>window.__digestRaw = {{ output | tojson }};</script>
+                <div class="digest-output" id="digest-output"></div>
                 {% else %}
+                <div class="output-label">Output</div>
                 <div class="output-box">{{ output }}</div>
                 {% endif %}
             </div>
@@ -114,14 +112,7 @@
     {% endif %}
 
     <script>
-        // ── Digest: render markdown output ────────────────────────
-        const digestOutput = document.getElementById("digest-output");
-        if (digestOutput && typeof marked !== "undefined") {
-            const raw = digestOutput.dataset.raw;
-            digestOutput.innerHTML = marked.parse(raw);
-        }
-
-        // ── Digest: show loading state on form submit ─────────────
+        // ── Digest: loading state on submit ───────────────────────
         const isDigest = {{ "true" if active_tool_id == "digest" else "false" }};
 
         if (isDigest) {
@@ -131,18 +122,173 @@
             const loadingMsg = document.getElementById("loading-msg");
 
             form.addEventListener("submit", function () {
-                // Disable button so it can't be clicked twice
                 submitBtn.disabled = true;
                 submitBtn.textContent = "Working...";
-
-                // Show loading block
                 loadingEl.style.display = "flex";
-
-                // After ~8 seconds, assume fetch is done and Claude is running
                 setTimeout(function () {
-                    loadingMsg.textContent = "Generating digest...";
+                    loadingMsg.textContent = "Generating digest — this can take up to 2 minutes...";
                 }, 8000);
             });
+        }
+
+        // ── Digest: newspaper-style renderer ──────────────────────
+
+        function getSectionType(heading) {
+            if (heading.includes("📰")) return "tech-news";
+            if (heading.includes("🚀")) return "launches";
+            if (heading.includes("📘")) return "case-study";
+            if (heading.includes("🧠")) return "framework";
+            if (heading.includes("🔥")) return "insight";
+            if (heading.includes("⚡")) return "tip";
+            return "generic";
+        }
+
+        function renderNewsItems(body) {
+            // Normalize line endings (Windows \r\n → \n)
+            const normalized = body.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+            // Strategy 1: items are separated by --- dividers (Claude's standard format)
+            let items = normalized.split(/\n\s*---\s*\n/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0 && /\*\*/.test(s));
+
+            // Strategy 2: split before lines starting with ** or numbered ** (e.g. "1. **Headline**")
+            if (items.length <= 1) {
+                items = normalized.split(/\n(?=\*\*|\d+\.\s+\*\*)/).map(s => s.trim()).filter(Boolean);
+            }
+
+            // Strategy 3: split by blank lines, keep chunks with bold text
+            if (items.length <= 1) {
+                items = normalized.split(/\n\n+/)
+                    .map(s => s.trim())
+                    .filter(s => /\*\*/.test(s));
+            }
+
+            // Strategy 4: last resort — treat the whole body as one item
+            if (items.length <= 1) {
+                items = [normalized.trim()];
+            }
+
+            if (!items.length) {
+                return `<div class="ds-body">${marked.parse(body)}</div>`;
+            }
+
+            let html = '<div class="ds-news-list">';
+            for (const item of items) {
+                // Strip leading number prefix (e.g. "1. ") so markdown renders cleanly
+                const cleaned = item.replace(/^\d+\.\s+/, "");
+                // Parse markdown into a temp element so we can manipulate the DOM
+                const temp = document.createElement("div");
+                temp.innerHTML = marked.parse(cleaned);
+
+                // Find the source URL — it's the first <a> in the rendered output
+                const sourceAnchor = temp.querySelector("a");
+                const url = sourceAnchor ? sourceAnchor.href : null;
+
+                // Make the headline clickable: wrap the <strong> in the first <p> with an <a>
+                if (url) {
+                    const firstP = temp.querySelector("p:first-child");
+                    const strong = firstP && firstP.querySelector("strong");
+                    if (firstP && strong) {
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.target = "_blank";
+                        link.rel = "noopener noreferrer";
+                        link.className = "ds-news-headline";
+                        link.appendChild(strong.cloneNode(true));
+                        firstP.innerHTML = "";
+                        firstP.appendChild(link);
+                    }
+                }
+
+                html += `<div class="ds-news-card">${temp.innerHTML}</div>`;
+            }
+            html += "</div>";
+            return html;
+        }
+
+        function renderLaunchItems(body) {
+            const normalized = body.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+            // Split on --- dividers or before ** lines
+            let items = normalized.split(/\n\s*---\s*\n/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0 && /\*\*/.test(s));
+
+            if (items.length <= 1) {
+                items = normalized.split(/\n(?=\*\*|\d+\.\s+\*\*)/).map(s => s.trim()).filter(Boolean);
+            }
+
+            if (!items.length) return `<div class="ds-body">${marked.parse(body)}</div>`;
+
+            let html = '<div class="ds-launch-grid">';
+            for (const item of items) {
+                const cleaned = item.replace(/^\d+\.\s+/, "");
+                const temp = document.createElement("div");
+                temp.innerHTML = marked.parse(cleaned);
+
+                const sourceAnchor = temp.querySelector("a");
+                const url = sourceAnchor ? sourceAnchor.href : null;
+
+                const firstP = temp.querySelector("p:first-child");
+                const strong = firstP && firstP.querySelector("strong");
+                if (firstP && strong && url) {
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.className = "ds-launch-name";
+                    link.appendChild(strong.cloneNode(true));
+                    firstP.innerHTML = "";
+                    firstP.appendChild(link);
+                }
+
+                html += `<div class="ds-launch-card">${temp.innerHTML}</div>`;
+            }
+            html += "</div>";
+            return html;
+        }
+
+        function renderDigest(raw) {
+            // Normalize line endings
+            const normalized = raw.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+            // Split on ### headings — avoids confusing --- section dividers with --- item dividers inside Tech News
+            const parts = normalized.trim().split(/(?=^###\s)/m).map(s => s.trim()).filter(Boolean);
+            let html = '<div class="digest-newspaper">';
+
+            for (const part of parts) {
+                // Find the ### heading line
+                const headingMatch = part.match(/^###\s+(.+)$/m);
+                if (!headingMatch) continue;
+
+                const headingText = headingMatch[1].trim();
+                const headingLine = headingMatch[0];
+                const body = part.slice(part.indexOf(headingLine) + headingLine.length).trim();
+                const type = getSectionType(headingText);
+
+                html += `<div class="ds-section ds-${type}">`;
+                html += `<div class="ds-section-title">${headingText}</div>`;
+
+                if (type === "tech-news") {
+                    html += renderNewsItems(body);
+                } else if (type === "launches") {
+                    html += renderLaunchItems(body);
+                } else {
+                    html += `<div class="ds-body">${marked.parse(body)}</div>`;
+                }
+
+                html += "</div>";
+            }
+
+            html += "</div>";
+            return html;
+        }
+
+        // Render digest output if present
+        const digestOutput = document.getElementById("digest-output");
+        if (digestOutput && typeof marked !== "undefined" && window.__digestRaw) {
+            digestOutput.innerHTML = renderDigest(window.__digestRaw);
         }
     </script>
 

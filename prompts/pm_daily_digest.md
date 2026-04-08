@@ -25,21 +25,35 @@ The input may contain:
 
 ---
 
-### 📰 1. Tech News (Top 5)
+### 📰 1. Tech News (Top 10)
 
-Five real, recent developments worth a PM's attention. Prioritize specificity — product moves, strategy shifts, launches — over general industry chatter.
+Ten real, recent developments worth a PM's attention. Prioritize specificity — product moves, strategy shifts, launches — over general industry chatter.
 
-For each item:
+Every item must follow this exact format — no exceptions, no skipping the summary:
 
 **[Headline]**
 Source: [Publication name](URL) *(omit URL line entirely if not available in input)*
-[2–3 line crisp summary. What happened, why it matters to a PM, and nothing else. No filler.]*
+[Exactly 2 sentences. Sentence 1: what happened. Sentence 2: why it matters to a PM.]
+
+Repeat for all 10 items.
+
+---
+
+### 🚀 2. New Product Launches
+
+Today's notable launches from Product Hunt. Pick the 5 most interesting ones for a PM audience.
+
+Every item must follow this exact format:
+
+**[Product Name]**
+[Tagline from source] · [votes] votes
+[1 sentence: what it does and why a PM would care.]
 
 Repeat for all 5 items.
 
 ---
 
-### 📘 2. Product Case Study
+### 📘 3. Product Case Study
 
 One specific product decision from a real company — not a company overview.
 
@@ -52,7 +66,7 @@ Specificity standard: if the case study could describe 20 different companies, i
 
 ---
 
-### 🧠 3. PM Framework / Concept
+### 🧠 4. PM Framework / Concept
 
 One mental model that changes how a PM sees a problem.
 
@@ -65,7 +79,7 @@ If knowing the framework doesn't change a decision, pick a different one.
 
 ---
 
-### 🔥 4. Key Trend / Insight
+### 🔥 5. Key Trend / Insight
 
 One trend actively reshaping how products are built or used.
 
@@ -75,7 +89,7 @@ One trend actively reshaping how products are built or used.
 
 ---
 
-### ⚡ 5. Practical Tip
+### ⚡ 6. Practical Tip
 
 One technique a PM can apply immediately.
 

@@ -1,10 +1,12 @@
 import os
 import subprocess
-from flask import Flask, render_template, request
+from datetime import date, datetime
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
 CLAUDE_CMD = r"C:\Users\user\AppData\Roaming\npm\claude.cmd"
+DIGESTS_DIR = "outputs/digests"
 
 # Tool definitions: id → name, prompt file, input placeholder
 TOOLS = {
@@ -18,7 +20,7 @@ TOOLS = {
     "feedback":       {"name": "Feedback Analyzer",                 "prompt": None,                            "placeholder": "Paste user feedback, reviews, or survey responses here."},
     "analytics":      {"name": "Analytics Assistant",               "prompt": None,                            "placeholder": "Describe the metric or trend you want to understand."},
     "competitor":     {"name": "Competitor & Market Analyzer",      "prompt": None,                            "placeholder": "Name the competitor or market you want analyzed."},
-    "digest":         {"name": "Daily Digest",                      "prompt": "prompts/pm_daily_digest.md",    "placeholder": "Optional: Enter a domain or topic (e.g. 'Domain: AI and SaaS'). Sources will be fetched automatically."},
+    "digest":         {"name": "Daily Digest",                      "prompt": "prompts/pm_daily_digest.md",    "placeholder": ""},
     "learning":       {"name": "Learning Coach",                    "prompt": None,                            "placeholder": "What PM skill or topic do you want to learn about?"},
 }
 
@@ -31,6 +33,61 @@ CATEGORIES = [
     {"name": "Learning & Growth",                 "tools": ["learning"]},
 ]
 
+
+# ---------------------------------------------------------------------------
+# Digest history helpers
+# ---------------------------------------------------------------------------
+
+def save_digest(content, for_date=None):
+    """Save digest content to outputs/digests/YYYY-MM-DD.txt."""
+    os.makedirs(DIGESTS_DIR, exist_ok=True)
+    filename = (for_date or date.today()).strftime("%Y-%m-%d") + ".txt"
+    path = os.path.join(DIGESTS_DIR, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return path
+
+
+def load_digest(for_date):
+    """Load a saved digest by date string (YYYY-MM-DD). Returns content or None."""
+    path = os.path.join(DIGESTS_DIR, f"{for_date}.txt")
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    return None
+
+
+def list_digest_dates():
+    """Return sorted list of saved digest date strings, newest first."""
+    if not os.path.isdir(DIGESTS_DIR):
+        return []
+    dates = []
+    for fname in os.listdir(DIGESTS_DIR):
+        if fname.endswith(".txt") and fname != ".gitkeep":
+            dates.append(fname.replace(".txt", ""))
+    dates.sort(reverse=True)
+    return dates
+
+
+def format_date_label(date_str):
+    """Convert YYYY-MM-DD to a human-readable label like 'Today', 'Yesterday', 'Apr 7'."""
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        today = date.today()
+        delta = (today - d).days
+        if delta == 0:
+            return "Today"
+        elif delta == 1:
+            return "Yesterday"
+        else:
+            return d.strftime("%b") + " " + str(d.day)
+    except ValueError:
+        return date_str
+
+
+# ---------------------------------------------------------------------------
+# Claude helpers
+# ---------------------------------------------------------------------------
 
 def run_claude(prompt_file, input_text):
     """Read a prompt file, substitute {{input}}, and send to Claude CLI."""
@@ -45,7 +102,7 @@ def run_claude(prompt_file, input_text):
         capture_output=True,
         text=True,
         encoding="utf-8",
-        timeout=120,
+        timeout=300,
     )
 
     if result.returncode != 0:
@@ -54,13 +111,12 @@ def run_claude(prompt_file, input_text):
     return result.stdout
 
 
-def run_digest(user_input):
+def run_digest():
     """
     Daily Digest pipeline:
       1. Run fetch_sources.py to pull articles into outputs/raw_sources.txt
-      2. Read that file as the Claude input
-      3. Optionally prepend a domain preference from the user
-      4. Run Claude with the digest prompt
+      2. Run Claude with the digest prompt
+      3. Save result to outputs/digests/YYYY-MM-DD.txt
     Returns (output, error) — one of them will always be None.
     """
 
@@ -94,22 +150,25 @@ def run_digest(user_input):
     if not raw_sources:
         return None, "Fetched sources file is empty. Check inputs/daily_sources.txt and try again."
 
-    # Step 3: Build Claude input — domain preference (if any) + fetched articles
-    if user_input:
-        claude_input = f"{user_input}\n\n---\n\n{raw_sources}"
-    else:
-        claude_input = raw_sources
-
-    # Step 4: Run Claude
+    # Step 3: Run Claude
     print("Running Claude digest prompt ...")
     try:
-        output = run_claude("prompts/pm_daily_digest.md", claude_input)
-        return output, None
+        output = run_claude("prompts/pm_daily_digest.md", raw_sources)
     except subprocess.TimeoutExpired:
-        return None, "Claude took too long to respond. Try again."
+        return None, "Claude took too long to respond (>5 min). Try again."
     except FileNotFoundError:
         return None, "Claude CLI not found. Check that it is installed and CLAUDE_CMD is correct."
 
+    # Step 4: Save to history
+    save_digest(output)
+    print(f"Digest saved for {date.today()}")
+
+    return output, None
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -119,24 +178,40 @@ def index():
     output = None
     user_input = ""
     error = None
+    digest_dates = []
+    active_digest_date = None
 
-    if request.method == "POST":
-        user_input = request.form.get("user_input", "").strip()
+    if tool_id == "digest":
+        digest_dates = list_digest_dates()
 
-        if not tool["prompt"]:
-            error = "This tool is coming soon."
+        if request.method == "POST":
+            # Generate a fresh digest
+            output, error = run_digest()
+            active_digest_date = date.today().strftime("%Y-%m-%d")
 
-        elif tool_id == "digest":
-            # Digest has its own pipeline — runs fetch_sources.py first
-            output, error = run_digest(user_input)
+        else:
+            # Load a specific date if requested, else load most recent
+            requested_date = request.args.get("date")
+            if requested_date and requested_date in digest_dates:
+                output = load_digest(requested_date)
+                active_digest_date = requested_date
+            elif digest_dates:
+                output = load_digest(digest_dates[0])
+                active_digest_date = digest_dates[0]
 
-        elif user_input:
-            try:
-                output = run_claude(tool["prompt"], user_input)
-            except subprocess.TimeoutExpired:
-                error = "Claude took too long to respond."
-            except FileNotFoundError:
-                error = "Claude CLI not found."
+    else:
+        if request.method == "POST":
+            user_input = request.form.get("user_input", "").strip()
+
+            if not tool["prompt"]:
+                error = "This tool is coming soon."
+            elif user_input:
+                try:
+                    output = run_claude(tool["prompt"], user_input)
+                except subprocess.TimeoutExpired:
+                    error = "Claude took too long to respond."
+                except FileNotFoundError:
+                    error = "Claude CLI not found."
 
     return render_template(
         "index.html",
@@ -147,6 +222,9 @@ def index():
         output=output,
         user_input=user_input,
         error=error,
+        digest_dates=digest_dates,
+        active_digest_date=active_digest_date,
+        format_date_label=format_date_label,
     )
 
 
