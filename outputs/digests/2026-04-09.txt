@@ -1,0 +1,87 @@
+---
+
+### 📰 1. Tech News (Top 10)
+
+**Meta Launches Muse Spark, Its First Model from Superintelligence Labs**
+Source: [TechCrunch](https://techcrunch.com/2026/04/08/meta-debuts-the-muse-spark-model-in-a-ground-up-overhaul-of-its-ai/)
+Meta's Superintelligence Labs — led by former Scale AI CEO Alexandr Wang — released Muse Spark, now powering the Meta AI app and website after a "ground-up overhaul" of Meta's AI infrastructure. Despite strong benchmark claims, Meta admitted "performance gaps" in agentic and coding systems, which tells you exactly where the next competitive pressure will land.
+
+**Canva Acquires Simtheory and Ortto**
+Source: [TechCrunch](https://techcrunch.com/2026/04/08/canva-doubles-down-on-ai-and-marketing-automation-with-simtheory-ortto-acquisitions/)
+Canva acquired agentic AI firm Simtheory and marketing automation platform Ortto, adding data infrastructure, customer engagement tooling, and autonomous campaign capabilities to its product suite. For PMs in adjacent tools — design, martech, customer engagement — Canva just became a platform competitor, not just a creation tool.
+
+**Poke Brings AI Agents to Users via Text Message**
+Source: [TechCrunch](https://techcrunch.com/2026/04/08/poke-makes-ai-agents-as-easy-as-sending-a-text/)
+Poke lets everyday users trigger AI agents and automations through SMS, bypassing app installs, onboarding flows, and technical setup entirely. This is the distribution unlock the agentic layer has been missing — SMS reaches users where they already are, not where you hope they'll come.
+
+**Tubi Becomes First Streamer to Launch a Native App Inside ChatGPT**
+Source: [TechCrunch](https://techcrunch.com/2026/04/08/tubi-is-the-first-streamer-to-launch-a-native-app-within-chatgpt/)
+Tubi integrated natively within ChatGPT, allowing users to discover and stream content directly from AI conversations without leaving the interface. This is the first concrete proof that ChatGPT is becoming a distribution channel — the question every PM should now ask is whether their category is next.
+
+**Google Gemini Adds Notebooks for Project Organization**
+Source: [The Verge](https://www.theverge.com/tech/909031/google-gemini-notebooks-notebooklm)
+Google is rolling out a "notebooks" feature in Gemini that lets users organize files, conversations, and context around specific topics in a persistent workspace, pulling from NotebookLM capabilities. This is Google's direct play against ChatGPT's memory and Projects features — AI-native workspaces are becoming the new productivity battleground.
+
+**WireGuard Developer Locked Out of Microsoft Account, Can't Ship Updates**
+Source: [TechCrunch](https://techcrunch.com/2026/04/08/wireguard-vpn-developer-cant-ship-software-updates-after-microsoft-locks-account/)
+The WireGuard VPN maintainer lost the ability to distribute software updates after Microsoft locked his account without notice or explanation — the second high-profile developer to report this pattern. For PMs with distribution dependencies on any major platform, this is a supply-chain risk that belongs in your vendor assessment, not just your legal review.
+
+**LinkedIn Caught Scanning Users' Browser Extensions, Faces Two Lawsuits**
+Source: [Ars Technica](https://arstechnica.com/tech-policy/2026/04/linkedin-scanning-users-browser-extensions-sparks-controversy-and-two-lawsuits/)
+LinkedIn was discovered scanning the browser extensions of logged-in users, triggering legal action and broad user backlash; LinkedIn disputes the characterization but the lawsuits are moving forward. The lesson for PMs isn't just legal — it's that data collection which exceeds what users perceive as the product's scope will surface and damage trust regardless of ToS language.
+
+**AI Memory Shortage Sends SSD Prices Up 3x Since 2024**
+Source: [The Verge](https://www.theverge.com/tech/908916/ssd-storage-shortages-price-increases)
+The same memory supply crunch powering AI data center buildouts has cascaded into consumer storage — a 2TB SSD that cost $173 in 2024 now sells for $649, with Motorola raising budget phone prices up to 50% for the same reason. Any product roadmap depending on commodity hardware assumptions — IoT, edge compute, devices — needs a cost model refresh now, not at next planning cycle.
+
+**OpenAI Details the Next Phase of Enterprise AI**
+Source: [OpenAI Blog](https://openai.com/index/next-phase-of-enterprise-ai)
+OpenAI outlined its enterprise roadmap centering Frontier, ChatGPT Enterprise, Codex, and "company-wide AI agents" as the core pillars of accelerating enterprise adoption. The shift in language from "AI tools" to "AI agent fleets" is deliberate — PMs should expect enterprise stakeholders to arrive at QBRs asking about agent infrastructure, not just copilot features.
+
+**Stripe Launches Machine Payments Protocol for AI Agents**
+Source: [Stripe Blog](https://stripe.com/blog/machine-payments-protocol)
+Stripe co-authored and released the Machine Payments Protocol (MPP), an open internet standard that lets AI agents initiate and complete payments autonomously, with businesses able to accept them in a few lines of code. If agentic commerce becomes the default buying surface, whoever controls the payment primitive controls the conversion layer — and Stripe just claimed that standard before the market formed.
+
+---
+
+### 🚀 2. New Product Launches
+
+*Product Hunt had no articles today. This section will return tomorrow.*
+
+---
+
+### 📘 3. Product Case Study
+
+**Stripe — Adaptive Pricing for Subscription Checkout**
+
+- **Company:** Stripe
+- **What they did:** In early 2026, Stripe shipped Adaptive Pricing for subscription checkout — automatically localizing prices across 150+ countries and handling currency conversion, then validated it with an A/B test across 1.5 million subscription checkout sessions.
+- **Why it worked:** The product changed the *default behavior* at the moment of purchase: instead of showing a USD price in local currency, it showed a price optimized for local purchasing power. The A/B test gave conversion signal at scale rather than shipping on intuition, which meant the team could tie the configuration change directly to revenue impact before evangelizing it internally.
+- **PM takeaway:** Default behaviors compound harder than opt-in features — when you control the flow, changing what happens when a user does nothing (rather than adding a toggle they'll never find) is almost always the higher-leverage move.
+
+---
+
+### 🧠 4. PM Framework / Concept
+
+- **Name:** Outcomes vs. Outputs
+- **The idea:** An output is the thing you shipped; an outcome is the user behavior change that justified shipping it — and only outcomes validate roadmap spend.
+- **When to use it:** When a stakeholder requests a specific feature instead of naming the problem, or when your team is celebrating a launch that didn't move the metric it was supposed to move.
+- **Example:** A team redesigns onboarding (output) and ships on time. But if 60-day retention doesn't improve, there's no outcome — the roadmap slot was consumed by activity, not progress. The correct framing from the start: "We want 55% of new users to complete their first project within 48 hours — what's the minimum change that gets us there?" That question rules out the redesign and points to the activation step that's actually failing.
+
+---
+
+### 🔥 5. Key Trend / Insight
+
+- **The trend:** AI agents are becoming autonomous buyers — and the payment and discovery infrastructure is being built right now, ahead of mainstream adoption
+- **Why it matters now:** Twelve months ago, agentic purchasing was theoretical. Today: Stripe has an open protocol (MPP) for agent-initiated transactions, Canva just acquired agentic AI infrastructure, Tubi integrated inside ChatGPT as a native distribution point, and Stripe's analysis of 20K+ businesses explicitly flags agent-mediated checkout as the next conversion surface. The infrastructure layer is forming before the user behavior fully exists — which means product decisions made now will be hard to reverse.
+- **Example:** Stripe's Machine Payments Protocol (March 2026) lets any business accept payments from an AI agent in a few lines of code. At Shoptalk 2026, ecommerce leaders described rethinking product discovery and checkout for "third-party AI surfaces" — meaning the agent, not the user, is increasingly the one deciding where to buy.
+
+---
+
+### ⚡ 6. Practical Tip
+
+- **The tip:** Before optimizing how you respond to notifications, build a triage layer — route all incoming async signals (Slack mentions, pings, alerts) into a single batched digest with explicit actionability labels, and only process them on a schedule.
+- **When to use it:** When you're a PM managing multiple concurrent workstreams and find yourself reacting to the most recent message rather than the highest-priority problem.
+- **Why it works:** Yash Tekriwal at Clay reduced 150 daily Slack notifications to ~30 actionable tasks by building a digest with OpenAI agents that classified messages by type before surfacing them. The failure mode it prevents is specific: without a filter, you optimize *response latency* (replying fast) instead of *decision quality* (acting on what matters). Most notifications are informational — conflating them with action items burns the same cognitive budget as actual decisions, just without the output.
+
+---

@@ -1,0 +1,123 @@
+# Product Newspaper — April 10, 2026
+
+---
+
+### 📰 1. Tech News (Top 10)
+
+**ChatGPT Launches $100/Month Pro Tier Centered on Codex**
+Source: [The Verge](https://www.theverge.com/ai-artificial-intelligence/909599/chatgpt-pro-subscription-new)
+OpenAI introduced a new Pro subscription at $100/month — filling the dead zone between the $20 Plus and $200 Pro tiers — with the primary differentiator being 5x more usage of Codex, its coding tool. For PMs, this is a pricing architecture signal: OpenAI is packaging AI coding access as the premium unlock, not general intelligence.
+
+---
+
+**Anthropic Held Back Its Newest Model Because It Was Too Good at Finding Security Exploits**
+Source: [TechCrunch](https://techcrunch.com/2026/04/09/is-anthropic-limiting-the-release-of-mythos-to-protect-the-internet-or-anthropic/)
+Anthropic's Mythos model was limited in release after internal assessments found it capable enough at finding software vulnerabilities to pose systemic risk. This is the first high-profile case of a lab proactively throttling a model's availability on capability grounds rather than safety/ethics grounds — and it sets a precedent for how AI product teams will have to think about deployment decisions at the frontier.
+
+---
+
+**Meta AI App Goes from #57 to #5 on the App Store After Muse Spark Launch**
+Source: [TechCrunch](https://techcrunch.com/2026/04/09/meta-ai-app-climbs-to-no-5-on-the-app-store-after-muse-spark-launch/)
+Meta's standalone AI app surged 52 ranks in the App Store within days of its Muse Spark model launch, signaling that model releases — not just features — can function as growth events. For PMs in the AI space, this confirms that the model itself has become a distribution mechanic: capability jumps drive install spikes the way major OS updates once did for utility apps.
+
+---
+
+**OpenAI Outlines "Next Phase" of Enterprise AI with Company-Wide Agents**
+Source: [OpenAI Blog](https://openai.com/index/next-phase-of-enterprise-ai)
+OpenAI published its enterprise roadmap, moving from team-level AI adoption toward company-wide autonomous agents built on Codex and Frontier — with the explicit framing that AI should operate across entire organizations, not just individual workflows. PMs selling into enterprise or building B2B products need to account for this: the procurement and integration expectations of enterprise AI buyers are shifting from "tool" to "teammate."
+
+---
+
+**GitHub Availability Dropped to ~90% Under Pressure from AI Coding Agents**
+Source: [Pragmatic Engineer](https://blog.pragmaticengineer.com/the-pulse-is-github-still-best-for-ai-native-development/)
+GitHub's reliability has degraded to roughly one nine — partially attributed to traffic spikes from AI coding agents hammering the platform at machine speed — while the company operates without a CEO. For PMs building developer tools or dependent on GitHub as infrastructure, this is a live reliability and vendor risk signal worth tracking before committing deeper integrations.
+
+---
+
+**Stripe Reports AI Agents Are Actively Restructuring Checkout Behavior Across 20K+ Businesses**
+Source: [Stripe Blog](https://stripe.com/blog/global-checkout-trends)
+Stripe analyzed checkout activity across more than 20,000 businesses and found that digital wallets, agent-initiated purchases, and trust signals are collectively replacing the traditional checkout funnel. PMs in commerce or payments should note that conversion optimization is no longer purely a UX problem — agent-mediated purchasing introduces entirely new trust and authorization flows that current checkout designs aren't built for.
+
+---
+
+**Nutanix Claims 30,000 VMware Customers Migrated as Broadcom Backlash Accelerates**
+Source: [Ars Technica](https://arstechnica.com/information-technology/2026/04/nutanix-claims-it-has-poached-30000-vmware-customers/)
+Nutanix says it has onboarded 30,000 former VMware customers, with major enterprises citing "negative views of Broadcom" as the driver — including Western Union explicitly naming "challenges" working with the new owner. For enterprise PMs, this is a case study in how post-acquisition pricing and support changes can create a migration wave large enough to make a competitor's year.
+
+---
+
+**Apple's UK Update Is Blocking VPN and Privacy App Functionality**
+Source: [Big Brother Watch](https://bigbrotherwatch.org.uk/blog/apples-new-iphone-update-is-restricting-internet-freedom-in-the-uk/)
+A new iPhone update in the UK is reportedly restricting how VPN and privacy-related apps function, following regulatory pressure — a significant moment in how platform compliance with national law shapes app developer freedom. PMs building privacy tools or distributing apps in regulated markets should treat this as a signal that platform API access is now a geopolitical variable, not just a technical one.
+
+---
+
+**John Deere Pays $99M to Settle Right-to-Repair Lawsuit**
+Source: [The Verge](https://www.theverge.com/policy/909524/john-deere-class-action-settlement-farmers)
+John Deere agreed to a $99 million settlement after a class action accused it of locking farmers out of repair materials for their own equipment — a direct consequence of using software and hardware lock-in to control post-sale service revenue. For PMs designing platforms with proprietary lock-in, this case draws a line: when the lock-in prevents users from maintaining systems they own, you've crossed from ecosystem stickiness into a legal liability.
+
+---
+
+**StubHub Pays $10M to FTC for Hiding Total Ticket Prices Until Checkout**
+Source: [TechCrunch](https://techcrunch.com/2026/04/09/stubhub-to-pay-10m-to-settle-ftc-allegations-over-deceptive-ticket-pricing/)
+The FTC settled with StubHub over its practice of advertising base ticket prices without surfacing fees upfront, ruling it violated consumer protection law on deceptive pricing. This is a direct warning shot for any PM with a pricing page, checkout flow, or subscription model that disaggregates total cost — the FTC is now actively litigating drip pricing as deception, not just a dark pattern.
+
+---
+
+### 🚀 2. New Product Launches
+
+**Brila**
+One-page websites generated from real Google Maps reviews · 1,105 votes
+Turns your existing review corpus into a landing page automatically — relevant for PMs thinking about social proof as a surface, not just a feature.
+
+**ProdShort**
+Turn meetings into ready-to-post shorts and posts · 621 votes
+Converts meeting recordings into short-form content for distribution — a direct play on the gap between the work teams do and the content they never produce from it.
+
+**Offsite**
+Build teams of humans and agents, watch them work · 498 votes
+A mixed human-agent team orchestration tool that makes workflows observable in real time — addresses the "black box" problem that currently limits PM trust in agentic systems.
+
+**Show Me a Leaderboard**
+Use friendly competition to build and strengthen community · 359 votes
+Drops a leaderboard mechanic into any community context with minimal setup — PMs running user communities or developer programs will recognize this as a fast path to activation loops.
+
+**Grass**
+Claude Code from your phone — agent gets a dedicated VM ready 24/7· 271 votes
+Gives a coding agent a persistent, always-on VM accessible from mobile — removes the "I need to be at my laptop" constraint from AI-assisted development and starts to blur the line between async work and agent work.
+
+---
+
+### 📘 3. Product Case Study
+
+- **Company:** Stripe
+- **What they did:** In March 2026, Stripe added a one-click toggle in Radar that automatically detects and blocks free trial abuse — repeated signups, missed cancellations — achieving 90%+ accuracy. Previously, this required custom fraud rules built by individual merchants.
+- **Why it worked:** Stripe has network-level visibility across millions of businesses that no individual merchant can replicate. By centralizing pattern detection and surfacing it as a default-off toggle rather than a configuration project, they lowered the activation cost to near zero while leveraging data that only their position in the stack provides. The 6.2x increase in detected abusive free trials between November 2025 and February 2026 gave them the signal density needed to make the model reliable enough to ship.
+- **PM takeaway:** Platform-level data advantages only become product advantages when you abstract the complexity out of the user's hands — a toggle beats a ruleset every time if you've done the model work upstream.
+
+---
+
+### 🧠 4. PM Framework / Concept
+
+- **Name:** Outcomes vs. Outputs
+- **The idea:** An output is a thing you ship; an outcome is a change in user or business behavior that results from it.
+- **When to use it:** When your roadmap is full of features with no stated success condition — specifically when you can describe every item as a deliverable but not as a behavior change you expect to observe.
+- **Example:** "Launch comment editing on Instagram" is an output. "Reduce comment deletion rate by 30% because users fix mistakes instead of deleting" is the outcome. The distinction matters because a PM optimizing for outputs ships the feature and moves on; a PM optimizing for the outcome asks why the deletion rate didn't move even after shipping — which is where the real learning lives. Instagram actually shipped comment editing (April 2026), and the measurable outcome is whether it reduces the friction that causes users to abandon comment threads entirely.
+
+---
+
+### 🔥 5. Key Trend / Insight
+
+- **The trend:** AI model releases are becoming distribution events — not just capability updates
+- **Why it matters now:** Twelve months ago, a new model version was a technical changelog. Today, Meta AI's Muse Spark launch drove a 52-rank App Store jump in 48 hours. ChatGPT's $100 plan is anchored to Codex usage, not general access. Anthropic's Mythos is generating headlines — and presumably signups — even in limited release. The model has become the product launch, and the PR cycle around capability releases now functions like a product drop.
+- **Example:** Meta AI went from #57 to #5 on the App Store with no new UX changes — purely on the strength of a model announcement. For PMs at AI companies, this reframes how you think about launch sequencing: the model release *is* the growth lever, and the app is the container you're filling. For PMs at non-AI companies watching their AI-native competitors, it means capability velocity is now a retention risk, not just a competitive consideration.
+
+---
+
+### ⚡ 6. Practical Tip
+
+- **The tip:** Before writing a single line of a spec, write the press release headline and the one-sentence rejection from a skeptical user.
+- **When to use it:** At the earliest stage of a feature idea — before you've estimated scope, before you've written acceptance criteria, before you've aligned stakeholders.
+- **Why it works:** It prevents the most common PM failure mode: shipping a feature that is technically correct but motivationally wrong. The press release forces you to articulate the user value in plain language; the skeptic's rejection forces you to surface the main counterargument before you've invested weeks building toward a flawed premise. If you can't write the headline or you can't steel-man the rejection, the idea isn't ready — and discovering that in ten minutes beats discovering it in sprint review.
+
+---

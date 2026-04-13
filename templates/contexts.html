@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PMBuddy — Contexts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- Sidebar -->
+    {% set is_contexts_page = true %}
+    {% include '_sidebar.html' %}
+
+    <!-- Main content -->
+    <main class="main">
+        <h1>Contexts</h1>
+        <p class="contexts-subtitle">
+            Each context tells Claude who you are and what you're working on.
+            Switch contexts to generate outputs tailored to different companies or products.
+        </p>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success-banner">{{ success }}</div>
+        {% endif %}
+
+        <!-- Existing context cards -->
+        {% if all_contexts %}
+        <div class="context-cards">
+            {% for ctx in all_contexts %}
+            <div class="context-card {% if active_context and active_context.id == ctx.id %}context-card-active{% endif %}">
+                <div class="context-card-header">
+                    <div class="context-card-name">{{ ctx.name }}</div>
+                    {% if active_context and active_context.id == ctx.id %}
+                    <span class="context-active-badge">Active</span>
+                    {% endif %}
+                </div>
+
+                <div class="context-card-fields">
+                    {% if ctx.industry %}<div class="context-field"><span class="cf-label">Industry</span><span class="cf-value">{{ ctx.industry }}</span></div>{% endif %}
+                    {% if ctx.product  %}<div class="context-field"><span class="cf-label">Product</span><span class="cf-value">{{ ctx.product }}</span></div>{% endif %}
+                    {% if ctx.users    %}<div class="context-field"><span class="cf-label">Users</span><span class="cf-value">{{ ctx.users }}</span></div>{% endif %}
+                    {% if ctx.stage    %}<div class="context-field"><span class="cf-label">Stage</span><span class="cf-value">{{ ctx.stage }}</span></div>{% endif %}
+                    {% if ctx.key_metrics %}<div class="context-field"><span class="cf-label">Metrics</span><span class="cf-value">{{ ctx.key_metrics }}</span></div>{% endif %}
+                    {% if ctx.competitors %}<div class="context-field"><span class="cf-label">Competitors</span><span class="cf-value">{{ ctx.competitors }}</span></div>{% endif %}
+                </div>
+
+                <div class="context-card-actions">
+                    {% if not (active_context and active_context.id == ctx.id) %}
+                    <form method="POST" action="/contexts/{{ ctx.id }}/activate" style="display:inline;">
+                        <button type="submit" class="ctx-btn ctx-btn-activate">Set Active</button>
+                    </form>
+                    {% endif %}
+                    <a href="/contexts?edit={{ ctx.id }}" class="ctx-btn ctx-btn-edit">Edit</a>
+                    <form method="POST" action="/contexts/{{ ctx.id }}/delete"
+                          style="display:inline;"
+                          onsubmit="return confirm('Delete context \'{{ ctx.name }}\'?');">
+                        <button type="submit" class="ctx-btn ctx-btn-delete">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="contexts-empty">
+            No contexts yet. Create your first one below.
+        </div>
+        {% endif %}
+
+        <!-- Create / Edit form -->
+        <div class="context-form-section">
+            <div class="context-form-title">
+                {% if edit_context %}Edit Context{% else %}New Context{% endif %}
+            </div>
+            <p class="context-form-subtitle">
+                Fill the fields manually, or paste a company description and let Claude do it for you.
+            </p>
+
+            <!-- Fill from description panel -->
+            <div class="parse-panel">
+                <div class="parse-panel-header">
+                    <span class="parse-panel-label">Fill from description</span>
+                    <span class="parse-panel-hint">Paste a blurb — LinkedIn About, internal doc, a few sentences</span>
+                </div>
+                <textarea
+                    id="parse-description"
+                    rows="4"
+                    placeholder="e.g. Acme Corp is a Series B B2B SaaS company building analytics tools for data teams at mid-market companies. We compete with Tableau and Looker, and our key metric is 30-day active users..."
+                    class="ctx-input parse-textarea"
+                ></textarea>
+                <div class="parse-actions">
+                    <button type="button" id="parse-btn" class="ctx-btn-parse" onclick="parseDescription()">
+                        Auto-fill fields
+                    </button>
+                    <span id="parse-status" class="parse-status"></span>
+                </div>
+            </div>
+
+            <div class="parse-divider">
+                <span>or fill manually</span>
+            </div>
+
+            <form method="POST" action="/contexts" class="context-form" id="context-form">
+                {% if edit_context %}
+                <input type="hidden" name="original_id" value="{{ edit_context.id }}" />
+                {% endif %}
+
+                {% for field in context_fields %}
+                <div class="context-form-field">
+                    <label class="ctx-label" for="field_{{ field.key }}">
+                        {{ field.label }}
+                        {% if field.required %}<span class="ctx-required">*</span>{% endif %}
+                    </label>
+                    {% if field.type == "textarea" %}
+                    <textarea
+                        id="field_{{ field.key }}"
+                        name="{{ field.key }}"
+                        rows="3"
+                        placeholder="{{ field.placeholder }}"
+                        class="ctx-input"
+                        {% if field.required %}required{% endif %}
+                    >{{ edit_context[field.key] if edit_context and edit_context.get(field.key) else "" }}</textarea>
+                    {% else %}
+                    <input
+                        type="text"
+                        id="field_{{ field.key }}"
+                        name="{{ field.key }}"
+                        placeholder="{{ field.placeholder }}"
+                        class="ctx-input"
+                        value="{{ edit_context[field.key] if edit_context and edit_context.get(field.key) else "" }}"
+                        {% if field.required %}required{% endif %}
+                    />
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="context-form-actions">
+                    <button type="submit" class="ctx-btn-save">
+                        {% if edit_context %}Save Changes{% else %}Create Context{% endif %}
+                    </button>
+                    {% if edit_context %}
+                    <a href="/contexts" class="ctx-btn-cancel">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+    </main>
+</div>
+
+<script>
+function parseDescription() {
+    const desc = document.getElementById("parse-description").value.trim();
+    if (!desc) {
+        setParseStatus("Paste a description first.", "error");
+        return;
+    }
+
+    const btn = document.getElementById("parse-btn");
+    btn.disabled = true;
+    btn.textContent = "Parsing...";
+    setParseStatus("Claude is reading your description…", "info");
+
+    const formData = new FormData();
+    formData.append("description", desc);
+
+    fetch("/contexts/parse", { method: "POST", body: formData })
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+            if (!result.ok) {
+                setParseStatus(result.data.error || "Something went wrong.", "error");
+                return;
+            }
+            const fields = result.data;
+            let filled = 0;
+            Object.keys(fields).forEach(function(key) {
+                const el = document.getElementById("field_" + key);
+                if (el && fields[key]) {
+                    el.value = fields[key];
+                    el.classList.add("field-autofilled");
+                    filled++;
+                }
+            });
+            setParseStatus(
+                filled > 0
+                    ? filled + " fields filled — review and adjust before saving."
+                    : "Couldn't extract any fields. Try adding more detail.",
+                filled > 0 ? "success" : "error"
+            );
+        })
+        .catch(function() {
+            setParseStatus("Request failed. Is the app running?", "error");
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = "Auto-fill fields";
+        });
+}
+
+function setParseStatus(msg, type) {
+    const el = document.getElementById("parse-status");
+    el.textContent = msg;
+    el.className = "parse-status parse-status-" + type;
+}
+</script>
+</body>
+</html>

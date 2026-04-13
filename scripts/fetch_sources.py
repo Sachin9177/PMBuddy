@@ -14,7 +14,7 @@ Output: outputs/raw_sources.txt (same format as before — nothing downstream ch
 import re
 import requests
 import feedparser
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 SOURCES_FILE = "inputs/daily_sources.txt"
 OUTPUT_FILE = "outputs/raw_sources.txt"
@@ -231,7 +231,7 @@ def fetch_producthunt(api_key, max_items=MAX_PER_SOURCE):
         print("  Product Hunt: no API key configured, skipping.")
         return []
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00Z")
+    today = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
     query = """
     {
       posts(first: %d, order: VOTES, postedAfter: "%s") {

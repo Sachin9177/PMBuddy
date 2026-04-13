@@ -1,0 +1,54 @@
+<aside class="sidebar">
+    <div class="sidebar-header">PMBuddy</div>
+
+    <!-- Context switcher -->
+    <div class="sidebar-context">
+        <div class="sidebar-context-label">Context</div>
+        <details class="context-switcher">
+            <summary class="context-current {% if active_context %}has-context{% endif %}">
+                <span class="context-dot"></span>
+                {{ active_context.name if active_context else "No context set" }}
+            </summary>
+            <div class="context-dropdown">
+                {% for ctx in all_contexts %}
+                <form method="POST" action="/contexts/{{ ctx.id }}/activate">
+                    <button type="submit"
+                            class="context-option {% if active_context and active_context.id == ctx.id %}active{% endif %}">
+                        {{ ctx.name }}
+                    </button>
+                </form>
+                {% endfor %}
+                {% if not all_contexts %}
+                <div class="context-dropdown-empty">No contexts yet</div>
+                {% endif %}
+                <a href="/contexts" class="context-manage-link">Manage contexts →</a>
+            </div>
+        </details>
+    </div>
+
+    <!-- Tool categories -->
+    {% for category in categories %}
+    <div class="category">
+        <div class="category-name">{{ category.name }}</div>
+        {% for tool_id in category.tools %}
+        <a
+            href="/?tool={{ tool_id }}"
+            class="tool-link {% if tool_id == active_tool_id %}active{% endif %}"
+        >
+            {{ tools[tool_id].name }}
+            {% if not tools[tool_id].prompt %}
+            <span class="badge">Soon</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <!-- Settings -->
+    <div class="sidebar-footer">
+        <a href="/contexts"
+           class="tool-link {% if is_contexts_page %}active{% endif %}">
+            Contexts
+        </a>
+    </div>
+</aside>

@@ -14,67 +14,144 @@
     <div class="layout">
 
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">PMBuddy</div>
-
-            {% for category in categories %}
-            <div class="category">
-                <div class="category-name">{{ category.name }}</div>
-                {% for tool_id in category.tools %}
-                <a
-                    href="/?tool={{ tool_id }}"
-                    class="tool-link {% if tool_id == active_tool_id %}active{% endif %}"
-                >
-                    {{ tools[tool_id].name }}
-                    {% if not tools[tool_id].prompt %}
-                    <span class="badge">Soon</span>
-                    {% endif %}
-                </a>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </aside>
+        {% set is_contexts_page = false %}
+        {% include '_sidebar.html' %}
 
         <!-- Main content -->
         <main class="main">
             <h1>{{ tool.name }}</h1>
 
+            <!-- Context banner (hidden on digest — context does not apply there) -->
+            {% if active_tool_id != "digest" %}
+            {% if active_context %}
+            <div class="context-banner has-context">
+                <span class="context-banner-dot"></span>
+                <span>Context: <strong>{{ active_context.name }}</strong></span>
+                <a href="/contexts" class="context-banner-link">change</a>
+            </div>
+            {% else %}
+            <div class="context-banner no-context">
+                No context set —
+                <a href="/contexts" class="context-banner-link">add one</a>
+                to personalise outputs.
+            </div>
+            {% endif %}
+            {% endif %}
+
             {% if tool.prompt %}
 
                 {% if active_tool_id == "digest" %}
 
-                <!-- Digest: header bar with history tabs + generate button -->
+                <!-- Digest: toolbar with history dropdown + generate button -->
                 <div class="digest-topbar">
-                    <div class="digest-history-tabs">
+                    <select class="prd-history-select" onchange="if(this.value) window.location.href=this.value;"
+                            {% if not digest_dates %}disabled{% endif %}>
+                        <option value="">
+                            {% if digest_dates %}History ({{ digest_dates|length }} digest{{ 's' if digest_dates|length != 1 else '' }}){% else %}No digests yet{% endif %}
+                        </option>
                         {% for d in digest_dates %}
-                        <a href="/?tool=digest&date={{ d }}"
-                           class="digest-date-tab {% if d == active_digest_date %}active{% endif %}">
+                        <option value="/?tool=digest&date={{ d }}"
+                            {% if d == active_digest_date %}selected{% endif %}>
                             {{ format_date_label(d) }}
-                        </a>
+                        </option>
                         {% endfor %}
-                        {% if not digest_dates %}
-                        <span class="digest-no-history">No digests yet</span>
-                        {% endif %}
-                    </div>
+                    </select>
                     <form method="POST" action="/?tool=digest" id="main-form">
                         <button type="submit" id="submit-btn">Generate Today's Digest</button>
                     </form>
                 </div>
 
-                {% else %}
+                {% elif active_tool_id == "prd" %}
 
-                <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form">
+                <!-- PRD: toolbar with history dropdown + New PRD button -->
+                <div class="prd-toolbar">
+                    <select class="prd-history-select" onchange="if(this.value) window.location.href=this.value;"
+                            {% if not prd_threads %}disabled{% endif %}>
+                        <option value="">
+                            {% if prd_threads %}History ({{ prd_threads|length }} PRD{{ 's' if prd_threads|length != 1 else '' }}){% else %}No PRDs yet{% endif %}
+                        </option>
+                        {% for thread in prd_threads %}
+                        <option value="/?tool=prd&thread={{ thread.id }}"
+                            {% if active_thread and active_thread.id == thread.id %}selected{% endif %}>
+                            {{ prd_thread_label(thread) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="/?tool=prd" class="prd-new-btn">+ New PRD</a>
+                </div>
+
+                <!-- Create mode: show textarea only when no PRD is active -->
+                {% if not output %}
+                <form method="POST" action="/?tool=prd" id="main-form">
                 <textarea
                     name="user_input"
                     rows="10"
                     placeholder="{{ tool.placeholder }}"
+                    maxlength="{{ max_input_chars }}"
                 >{{ user_input }}</textarea>
+                <div class="char-counter" id="char-counter">0 / {{ "{:,}".format(max_input_chars) }}</div>
+                <button type="submit" id="submit-btn">Generate PRD</button>
+                </form>
+                {% endif %}
+
+                {% else %}
+
+                <!-- Other tools: chips history + textarea -->
+                {% if output_history %}
+                <div class="output-history-bar">
+                    <span class="output-history-label">Recent</span>
+                    <div class="output-history-tabs">
+                        {% for filename, label in output_history %}
+                        <a href="/?tool={{ active_tool_id }}&file={{ filename }}"
+                           class="output-history-tab {% if filename == active_file %}active{% endif %}"
+                           title="{{ label }}">
+                            {{ label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form"
+                      enctype="multipart/form-data">
+
+                {% if active_tool_id == "meeting" %}
+                <!-- Input mode selector -->
+                <div class="input-mode-bar">
+                    <span class="input-mode-label">Input type</span>
+                    <label class="mode-option">
+                        <input type="radio" name="input_mode" value="notes" checked /> Notes
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="input_mode" value="transcript" /> Transcript
+                    </label>
+                </div>
+
+                <!-- File upload -->
+                <div class="file-upload-row">
+                    <label class="file-upload-label" for="meeting-file">
+                        Upload file <span class="file-upload-hint">(.txt or .md — e.g. Fathom transcript export)</span>
+                    </label>
+                    <input type="file" id="meeting-file" name="meeting_file" accept=".txt,.md"
+                           class="file-input" onchange="handleFileSelect(this)" />
+                    <span id="file-name-display" class="file-name-display"></span>
+                </div>
+                <div class="file-divider"><span>or paste below</span></div>
+                {% endif %}
+
+                <textarea
+                    name="user_input"
+                    rows="10"
+                    placeholder="{{ tool.placeholder }}"
+                    maxlength="{{ max_input_chars }}"
+                >{{ user_input }}</textarea>
+                <div class="char-counter" id="char-counter">0 / {{ "{:,}".format(max_input_chars) }}</div>
                 <button type="submit" id="submit-btn">Generate</button>
                 </form>
 
                 {% endif %}
 
-            <!-- Loading state (only shown during digest fetch via JS) -->
+            <!-- Loading state -->
             <div id="loading-state" class="loading-state" style="display: none;">
                 <div class="loading-spinner"></div>
                 <p id="loading-msg">Fetching latest sources...</p>
@@ -91,8 +168,77 @@
                 <script>window.__digestRaw = {{ output | tojson }};</script>
                 <div class="digest-output" id="digest-output"></div>
                 {% else %}
-                <div class="output-label">Output</div>
-                <div class="output-box">{{ output }}</div>
+                <!-- Raw markdown passed via script tag for Copy/Download -->
+                {% if raw_output %}
+                <script>window.__rawOutput = {{ raw_output | tojson }}; window.__outputFile = {{ (active_thread.id if active_thread else active_file or "") | tojson }};</script>
+                {% endif %}
+
+                <div class="output-header">
+                    <div class="output-label">
+                        {% if active_tool_id == "prd" and active_thread %}
+                            {{ active_thread.title }}
+                        {% else %}
+                            Output
+                        {% endif %}
+                    </div>
+                    {% if raw_output %}
+                    <div class="output-actions">
+                        <button type="button" class="action-btn" id="copy-btn" onclick="copyMarkdown()">Copy Markdown</button>
+                        <button type="button" class="action-btn" id="download-btn" onclick="downloadMarkdown()">Download .md</button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- PRD version strip -->
+                {% if active_tool_id == "prd" and thread_versions|length > 1 %}
+                <div class="version-strip">
+                    {% for v in thread_versions %}
+                    {% set is_active = (active_version == v.version) or (not active_version and loop.last) %}
+                    <a href="/?tool=prd&thread={{ active_thread.id }}&version={{ v.version }}"
+                       class="version-pill {% if is_active %}active{% endif %}"
+                       title="{{ v.instruction if v.instruction else 'Initial draft' }}">
+                        v{{ v.version }}
+                    </a>
+                    {% endfor %}
+                    <span class="version-label">
+                        {% set current_v = thread_versions[-1] if not active_version else thread_versions | selectattr('version', 'equalto', active_version) | first %}
+                        {% if current_v and current_v.instruction %}— {{ current_v.instruction[:60] }}{% if current_v.instruction|length > 60 %}…{% endif %}
+                        {% else %}— Initial draft{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="output-box rendered-md">{{ output | safe }}</div>
+
+                <!-- Refine section — PRD only, shown on latest version -->
+                {% if active_tool_id == "prd" and active_thread %}
+                {% set on_latest = not active_version or active_version == thread_versions[-1].version %}
+                {% if on_latest %}
+                <div class="refine-section">
+                    <div class="refine-header">
+                        <span class="refine-title">Refine this PRD</span>
+                        <span class="refine-hint">Describe what to change — saved as the next version</span>
+                    </div>
+                    <form method="POST" action="/?tool=prd" id="refine-form">
+                        <input type="hidden" name="action" value="refine" />
+                        <input type="hidden" name="thread_id" value="{{ active_thread.id }}" />
+                        <textarea
+                            name="refinement_instruction"
+                            rows="3"
+                            placeholder="e.g. Make the success metrics more specific. Add a risks section. Rewrite the user stories to follow the Jobs-to-be-Done format."
+                            class="refine-input"
+                        ></textarea>
+                        <button type="submit" class="refine-btn" id="refine-btn">Refine PRD</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="version-older-notice">
+                    Viewing an older version —
+                    <a href="/?tool=prd&thread={{ active_thread.id }}">go to latest (v{{ thread_versions[-1].version }})</a>
+                </div>
+                {% endif %}
+                {% endif %}
+
                 {% endif %}
             </div>
             {% endif %}
@@ -129,6 +275,50 @@
                     loadingMsg.textContent = "Generating digest — this can take up to 2 minutes...";
                 }, 8000);
             });
+        } else {
+            // ── Non-digest tools: disable button on submit, char counter ──
+            const form      = document.getElementById("main-form");
+            const submitBtn = document.getElementById("submit-btn");
+            const textarea  = form && form.querySelector("textarea");
+            const counter   = document.getElementById("char-counter");
+            const maxChars  = {{ max_input_chars }};
+
+            if (form && submitBtn) {
+                form.addEventListener("submit", function () {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Generating...";
+                    const loadingEl  = document.getElementById("loading-state");
+                    const loadingMsg = document.getElementById("loading-msg");
+                    if (loadingEl)  { loadingEl.style.display = "flex"; }
+                    if (loadingMsg) { loadingMsg.textContent = "Generating — this can take up to 90 seconds..."; }
+                });
+            }
+
+            // ── Refine form: disable button + loading state on submit ──
+            const refineForm = document.getElementById("refine-form");
+            const refineBtn  = document.getElementById("refine-btn");
+            if (refineForm && refineBtn) {
+                refineForm.addEventListener("submit", function () {
+                    refineBtn.disabled = true;
+                    refineBtn.textContent = "Refining...";
+                    const loadingEl  = document.getElementById("loading-state");
+                    const loadingMsg = document.getElementById("loading-msg");
+                    if (loadingEl)  { loadingEl.style.display = "flex"; }
+                    if (loadingMsg) { loadingMsg.textContent = "Refining — this can take up to 90 seconds..."; }
+                });
+            }
+
+            if (textarea && counter) {
+                function updateCounter() {
+                    const len = textarea.value.length;
+                    const formatted = len.toLocaleString() + " / " + maxChars.toLocaleString();
+                    counter.textContent = formatted;
+                    counter.classList.toggle("char-counter-warn",  len > maxChars * 0.8);
+                    counter.classList.toggle("char-counter-error", len >= maxChars);
+                }
+                textarea.addEventListener("input", updateCounter);
+                updateCounter(); // initialise on page load if input is pre-filled
+            }
         }
 
         // ── Digest: newspaper-style renderer ──────────────────────
@@ -289,6 +479,60 @@
         const digestOutput = document.getElementById("digest-output");
         if (digestOutput && typeof marked !== "undefined" && window.__digestRaw) {
             digestOutput.innerHTML = renderDigest(window.__digestRaw);
+        }
+
+        // ── Copy as Markdown ──────────────────────────────────
+        function copyMarkdown() {
+            const raw = window.__rawOutput;
+            if (!raw) return;
+            navigator.clipboard.writeText(raw).then(function () {
+                const btn = document.getElementById("copy-btn");
+                const original = btn.textContent;
+                btn.textContent = "Copied!";
+                btn.classList.add("action-btn-success");
+                setTimeout(function () {
+                    btn.textContent = original;
+                    btn.classList.remove("action-btn-success");
+                }, 2000);
+            });
+        }
+
+        // ── Download as .md ───────────────────────────────────
+        function downloadMarkdown() {
+            const raw = window.__rawOutput;
+            if (!raw) return;
+            const filename = window.__outputFile || "output.md";
+            const blob = new Blob([raw], { type: "text/markdown;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ── Meeting: file upload feedback ─────────────────────
+        function handleFileSelect(input) {
+            const display = document.getElementById("file-name-display");
+            const textarea = document.querySelector("textarea[name='user_input']");
+            if (!display) return;
+            if (input.files && input.files[0]) {
+                const name = input.files[0].name;
+                display.textContent = name + " selected";
+                display.className = "file-name-display file-selected";
+                // Grey out textarea to signal file takes priority
+                if (textarea) {
+                    textarea.style.opacity = "0.4";
+                    textarea.placeholder = "File upload will be used — textarea is ignored.";
+                }
+            } else {
+                display.textContent = "";
+                display.className = "file-name-display";
+                if (textarea) {
+                    textarea.style.opacity = "";
+                    textarea.placeholder = textarea.getAttribute("data-placeholder") || "";
+                }
+            }
         }
     </script>
 

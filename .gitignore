@@ -1,1 +1,7 @@
 outputs/raw_sources.txt
+outputs/debug*.txt
+outputs/prds/*.md
+outputs/meetings/*.md
+inputs/email_config.txt
+data/contexts/*.json
+data/active_context.txt
