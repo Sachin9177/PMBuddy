@@ -8,8 +8,118 @@ from flask import Flask, render_template, request, redirect, url_for
 from config import run_claude, MAX_INPUT_CHARS
 
 app = Flask(__name__)
+
+@app.template_filter("md_render")
+def md_render_filter(text):
+    """Jinja filter: render markdown string to HTML."""
+    return md.markdown(text or "", extensions=["nl2br", "tables"])
 DIGESTS_DIR  = "outputs/digests"
 CONTEXTS_DIR = "data/contexts"
+
+
+# ---------------------------------------------------------------------------
+# CSV preprocessing
+# ---------------------------------------------------------------------------
+
+def preprocess_csv(content, filename="data.csv"):
+    """
+    Convert raw CSV text into a structured statistical summary for Claude.
+    Returns (summary_text, info_string) where info_string describes what was
+    processed (e.g. "5,243 rows × 8 columns"). On failure, returns the
+    original content and an empty info string so the tool degrades gracefully.
+    """
+    try:
+        import pandas as pd
+        import io
+
+        df = pd.read_csv(io.StringIO(content))
+        rows, cols = df.shape
+        lines = []
+
+        # ── Header ──────────────────────────────────────────────────────────
+        lines.append(f"## Dataset: {filename}")
+        lines.append(f"- **Rows**: {rows:,}")
+        lines.append(f"- **Columns**: {cols}")
+        lines.append("")
+
+        # ── Column overview table ────────────────────────────────────────────
+        lines.append("## Column Summary")
+        lines.append("| Column | Type | Non-null | Nulls |")
+        lines.append("|--------|------|----------|-------|")
+        for col in df.columns:
+            dtype    = str(df[col].dtype)
+            non_null = int(df[col].count())
+            nulls    = int(df[col].isna().sum())
+            lines.append(f"| {col} | {dtype} | {non_null:,} | {nulls:,} |")
+        lines.append("")
+
+        # ── Numeric statistics ───────────────────────────────────────────────
+        numeric_cols = df.select_dtypes(include="number").columns.tolist()
+        if numeric_cols:
+            lines.append("## Numeric Column Statistics")
+            for col in numeric_cols:
+                s = df[col].dropna()
+                if s.empty:
+                    continue
+                lines.append(f"### {col}")
+                lines.append(
+                    f"- Min: {s.min():,.2f} | Max: {s.max():,.2f} | "
+                    f"Mean: {s.mean():,.2f} | Median: {s.median():,.2f} | "
+                    f"Std: {s.std():,.2f}"
+                )
+                nulls = int(df[col].isna().sum())
+                if nulls:
+                    lines.append(f"- Nulls: {nulls:,}")
+            lines.append("")
+
+        # ── Categorical breakdowns ───────────────────────────────────────────
+        cat_cols = df.select_dtypes(include="object").columns.tolist()
+        if cat_cols:
+            lines.append("## Categorical Columns")
+            for col in cat_cols:
+                unique = df[col].nunique()
+                lines.append(f"### {col} ({unique:,} unique values)")
+                if unique <= 30:
+                    top = df[col].value_counts().head(10)
+                    for val, cnt in top.items():
+                        pct = cnt / rows * 100
+                        lines.append(f"- {val}: {cnt:,} ({pct:.1f}%)")
+                else:
+                    lines.append("- High cardinality — top 5 most frequent values:")
+                    top = df[col].value_counts().head(5)
+                    for val, cnt in top.items():
+                        pct = cnt / rows * 100
+                        lines.append(f"  - {val}: {cnt:,} ({pct:.1f}%)")
+            lines.append("")
+
+        # ── Date range detection ─────────────────────────────────────────────
+        for col in df.columns:
+            if any(kw in col.lower() for kw in ("date", "time", "day", "week", "month")):
+                try:
+                    parsed = pd.to_datetime(df[col], errors="coerce")
+                    if parsed.notna().sum() > rows * 0.8:
+                        mn = parsed.min().strftime("%Y-%m-%d")
+                        mx = parsed.max().strftime("%Y-%m-%d")
+                        span = (parsed.max() - parsed.min()).days
+                        lines.append(f"## Date Range (column: {col})")
+                        lines.append(f"- From **{mn}** to **{mx}** ({span} days)")
+                        lines.append("")
+                        break
+                except Exception:
+                    pass
+
+        # ── Sample rows ──────────────────────────────────────────────────────
+        lines.append("## Sample Data (first 5 rows)")
+        lines.append("```")
+        lines.append(df.head(5).to_csv(index=False).strip())
+        lines.append("```")
+
+        summary = "\n".join(lines)
+        info    = f"{rows:,} rows, {cols} columns"
+        return summary, info
+
+    except Exception:
+        return content, ""
 ACTIVE_CONTEXT_FILE = "data/active_context.txt"
 
 # Auto-save directories for tools that generate persistent output
@@ -17,6 +127,9 @@ TOOL_OUTPUT_DIRS = {
     "prd":     "outputs/prds",
     "meeting": "outputs/meetings",
 }
+
+ANALYTICS_DIR = "outputs/analytics"
+FEEDBACK_DIR  = "outputs/feedback"
 
 # Fields shown in the context create/edit form
 CONTEXT_FIELDS = [
@@ -41,8 +154,8 @@ TOOLS = {
     "status-updates": {"name": "Status Updates",                    "prompt": None,                            "placeholder": "Describe what your team shipped, what's in progress, and any blockers."},
     "prioritization": {"name": "Prioritization Engine",             "prompt": "prompts/prioritize.md",         "placeholder": "List the features or initiatives you need to prioritize."},
     "experimentation":{"name": "Experimentation",                   "prompt": None,                            "placeholder": "Describe the hypothesis you want to test."},
-    "feedback":       {"name": "Feedback Analyzer",                 "prompt": None,                            "placeholder": "Paste user feedback, reviews, or survey responses here."},
-    "analytics":      {"name": "Analytics Assistant",               "prompt": None,                            "placeholder": "Describe the metric or trend you want to understand."},
+    "feedback":       {"name": "Feedback Analyzer",                 "prompt": "prompts/analyze_feedback.md",   "placeholder": "Paste user reviews, support tickets, NPS comments, or survey responses. The more you paste, the better the patterns.", "max_chars": 30_000},
+    "analytics":      {"name": "Analytics Assistant",               "prompt": "prompts/analytics_assistant.md","placeholder": "Describe what you're seeing in your data — metric movements, funnel numbers, A/B results, retention drops. Include any relevant context like recent releases or date ranges.", "max_chars": 30_000},
     "competitor":     {"name": "Competitor & Market Analyzer",      "prompt": None,                            "placeholder": "Name the competitor or market you want analyzed."},
     "digest":         {"name": "Daily Digest",                      "prompt": "prompts/pm_daily_digest.md",    "placeholder": ""},
     "learning":       {"name": "Learning Coach",                    "prompt": None,                            "placeholder": "What PM skill or topic do you want to learn about?"},
@@ -361,6 +474,202 @@ def prd_thread_label(thread):
 
 
 # ---------------------------------------------------------------------------
+# Analytics helpers — conversational sessions
+# ---------------------------------------------------------------------------
+
+def save_analytics_session(user_content, assistant_response):
+    """Create a new analytics session JSON. Returns session_id."""
+    os.makedirs(ANALYTICS_DIR, exist_ok=True)
+    now = datetime.now()
+    session_id = now.strftime("%Y%m%d_%H%M%S")
+    title = user_content.replace("\n", " ").strip()[:80]
+    session = {
+        "id": session_id,
+        "title": title,
+        "created": now.isoformat(),
+        "messages": [
+            {"role": "user",      "content": user_content,       "created": now.isoformat()},
+            {"role": "assistant", "content": assistant_response,  "created": now.isoformat()},
+        ],
+    }
+    with open(os.path.join(ANALYTICS_DIR, session_id + ".json"), "w", encoding="utf-8") as f:
+        json.dump(session, f, indent=2, ensure_ascii=False)
+    return session_id
+
+
+def get_analytics_session(session_id):
+    """Load an analytics session dict by ID, or None if not found."""
+    path = os.path.join(ANALYTICS_DIR, session_id + ".json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def append_analytics_turn(session_id, user_message, assistant_response):
+    """Append a Q&A turn to an existing analytics session."""
+    path = os.path.join(ANALYTICS_DIR, session_id + ".json")
+    with open(path, "r", encoding="utf-8") as f:
+        session = json.load(f)
+    now = datetime.now().isoformat()
+    session["messages"].append({"role": "user",      "content": user_message,        "created": now})
+    session["messages"].append({"role": "assistant", "content": assistant_response,   "created": now})
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(session, f, indent=2, ensure_ascii=False)
+
+
+def list_analytics_sessions():
+    """Return all analytics sessions sorted newest first."""
+    if not os.path.isdir(ANALYTICS_DIR):
+        return []
+    sessions = []
+    for fname in os.listdir(ANALYTICS_DIR):
+        if fname.endswith(".json"):
+            try:
+                with open(os.path.join(ANALYTICS_DIR, fname), "r", encoding="utf-8") as f:
+                    sessions.append(json.load(f))
+            except (json.JSONDecodeError, IOError):
+                pass
+    sessions.sort(key=lambda s: s.get("created", ""), reverse=True)
+    return sessions
+
+
+def analytics_session_label(session):
+    """Human-readable label for an analytics session in the history dropdown."""
+    title = session.get("title", "Untitled Analysis")
+    short = title[:50] + "…" if len(title) > 50 else title
+    n_questions = len([m for m in session.get("messages", []) if m["role"] == "user"])
+    q_label = f"{n_questions} question{'s' if n_questions != 1 else ''}"
+    try:
+        dt = datetime.fromisoformat(session["created"])
+        date_label = _prd_date_label(dt)
+    except (KeyError, ValueError):
+        date_label = ""
+    return f"{short} ({q_label}){' · ' + date_label if date_label else ''}"
+
+
+def build_analytics_followup_prompt(session, new_message):
+    """Build a single prompt containing the full conversation history + new question."""
+    lines = [
+        "You are a data analyst and Product Manager continuing an ongoing data analysis conversation.",
+        "The full conversation history is below. Answer the follow-up with that full context in mind.",
+        "Be focused and concise — address what is new or changed. Do not repeat the prior analysis unless asked.",
+        "",
+        "=== CONVERSATION HISTORY ===",
+        "",
+    ]
+    for msg in session.get("messages", []):
+        role = "User" if msg["role"] == "user" else "Assistant"
+        lines.append(f"{role}:\n{msg['content']}")
+        lines.append("")
+    lines += [
+        "=== FOLLOW-UP QUESTION ===",
+        "",
+        new_message,
+    ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Feedback helpers — conversational sessions
+# ---------------------------------------------------------------------------
+
+def save_feedback_session(user_content, assistant_response):
+    """Create a new feedback analysis session. Returns session_id."""
+    os.makedirs(FEEDBACK_DIR, exist_ok=True)
+    now = datetime.now()
+    session_id = now.strftime("%Y%m%d_%H%M%S")
+    title = user_content.replace("\n", " ").strip()[:80]
+    session = {
+        "id": session_id,
+        "title": title,
+        "created": now.isoformat(),
+        "messages": [
+            {"role": "user",      "content": user_content,      "created": now.isoformat()},
+            {"role": "assistant", "content": assistant_response, "created": now.isoformat()},
+        ],
+    }
+    with open(os.path.join(FEEDBACK_DIR, session_id + ".json"), "w", encoding="utf-8") as f:
+        json.dump(session, f, indent=2, ensure_ascii=False)
+    return session_id
+
+
+def get_feedback_session(session_id):
+    """Load a feedback session dict by ID, or None if not found."""
+    path = os.path.join(FEEDBACK_DIR, session_id + ".json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def append_feedback_turn(session_id, user_message, assistant_response):
+    """Append a Q&A turn to an existing feedback session."""
+    path = os.path.join(FEEDBACK_DIR, session_id + ".json")
+    with open(path, "r", encoding="utf-8") as f:
+        session = json.load(f)
+    now = datetime.now().isoformat()
+    session["messages"].append({"role": "user",      "content": user_message,        "created": now})
+    session["messages"].append({"role": "assistant", "content": assistant_response,   "created": now})
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(session, f, indent=2, ensure_ascii=False)
+
+
+def list_feedback_sessions():
+    """Return all feedback sessions sorted newest first."""
+    if not os.path.isdir(FEEDBACK_DIR):
+        return []
+    sessions = []
+    for fname in os.listdir(FEEDBACK_DIR):
+        if fname.endswith(".json"):
+            try:
+                with open(os.path.join(FEEDBACK_DIR, fname), "r", encoding="utf-8") as f:
+                    sessions.append(json.load(f))
+            except (json.JSONDecodeError, IOError):
+                pass
+    sessions.sort(key=lambda s: s.get("created", ""), reverse=True)
+    return sessions
+
+
+def feedback_session_label(session):
+    """Human-readable label for a feedback session in the history dropdown."""
+    title = session.get("title", "Untitled Analysis")
+    short = title[:50] + "…" if len(title) > 50 else title
+    n_questions = len([m for m in session.get("messages", []) if m["role"] == "user"])
+    q_label = f"{n_questions} question{'s' if n_questions != 1 else ''}"
+    try:
+        dt = datetime.fromisoformat(session["created"])
+        date_label = _prd_date_label(dt)
+    except (KeyError, ValueError):
+        date_label = ""
+    return f"{short} ({q_label}){' · ' + date_label if date_label else ''}"
+
+
+def build_feedback_followup_prompt(session, new_message):
+    """Build a single prompt containing the full feedback conversation + new question."""
+    lines = [
+        "You are a Product Manager analyst continuing an ongoing user feedback analysis conversation.",
+        "The full conversation history is below. Answer the follow-up with that full context in mind.",
+        "Be focused and concise — address what is new or changed. Do not repeat the prior analysis unless asked.",
+        "",
+        "=== CONVERSATION HISTORY ===",
+        "",
+    ]
+    for msg in session.get("messages", []):
+        role = "User" if msg["role"] == "user" else "Assistant"
+        lines.append(f"{role}:\n{msg['content']}")
+        lines.append("")
+    lines += [
+        "=== FOLLOW-UP QUESTION ===",
+        "",
+        new_message,
+    ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Context helpers
 # ---------------------------------------------------------------------------
 
@@ -642,6 +951,239 @@ def index():
             thread_versions=thread_versions,
             prd_thread_label=prd_thread_label,
             active_version=requested_version if request.method == "GET" else None,
+            # Analytics (empty for PRD)
+            analytics_sessions=[],
+            active_session=None,
+            analytics_session_label=analytics_session_label,
+            # Feedback (empty for PRD)
+            feedback_sessions=[],
+            active_feedback_session=None,
+            feedback_session_label=feedback_session_label,
+            csv_info="",
+        )
+
+    elif tool_id == "analytics":
+        # ── Analytics: conversational sessions ─────────────────────────────
+        tool_max_chars      = tool.get("max_chars", MAX_INPUT_CHARS)
+        analytics_sessions  = list_analytics_sessions()
+        active_session      = None
+        csv_info            = ""  # populated when a CSV is preprocessed
+
+        if request.method == "POST":
+            action = request.form.get("action", "new_analysis")
+
+            if action == "followup":
+                session_id  = request.form.get("session_id", "").strip()
+                followup_msg = request.form.get("followup_message", "").strip()
+                session     = get_analytics_session(session_id) if session_id else None
+
+                if not followup_msg:
+                    error = "Please enter a follow-up question."
+                    active_session = session
+                elif not session:
+                    error = "Could not load the session."
+                else:
+                    prompt = build_analytics_followup_prompt(session, followup_msg)
+                    try:
+                        from config import CLAUDE_CMD
+                        result = subprocess.run(
+                            [CLAUDE_CMD, "--print"],
+                            input=prompt,
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            timeout=300,
+                        )
+                        if result.returncode != 0:
+                            error = f"Error: {result.stderr}"
+                            active_session = session
+                        else:
+                            append_analytics_turn(session_id, followup_msg, result.stdout.strip())
+                            active_session    = get_analytics_session(session_id)
+                            analytics_sessions = list_analytics_sessions()
+                    except subprocess.TimeoutExpired:
+                        error = "Claude took too long to respond."
+                        active_session = session
+                    except FileNotFoundError:
+                        error = "Claude CLI not found."
+                        active_session = session
+
+            else:
+                # New analysis — file upload or textarea
+                uploaded_file = request.files.get("meeting_file")
+                if uploaded_file and uploaded_file.filename:
+                    try:
+                        raw_bytes  = uploaded_file.read().decode("utf-8", errors="replace").strip()
+                        fname      = uploaded_file.filename
+                        if fname.lower().endswith(".csv"):
+                            user_input, csv_info = preprocess_csv(raw_bytes, fname)
+                        else:
+                            user_input = raw_bytes
+                    except Exception:
+                        error = "Could not read the uploaded file."
+                else:
+                    user_input = request.form.get("user_input", "").strip()
+
+                if not error:
+                    if len(user_input) > tool_max_chars:
+                        error = f"Input too long ({len(user_input):,} chars). Please trim to under {tool_max_chars:,}."
+                    elif user_input:
+                        try:
+                            response = run_claude(tool["prompt"], user_input, context=active_context)
+                            session_id    = save_analytics_session(user_input, response.strip())
+                            active_session = get_analytics_session(session_id)
+                            analytics_sessions = list_analytics_sessions()
+                        except subprocess.TimeoutExpired:
+                            error = "Claude took too long to respond."
+                        except FileNotFoundError:
+                            error = "Claude CLI not found."
+        else:
+            requested_session = request.args.get("session")
+            if requested_session:
+                active_session = get_analytics_session(requested_session)
+
+        return render_template(
+            "index.html",
+            categories=CATEGORIES,
+            tools=TOOLS,
+            active_tool_id=tool_id,
+            tool=tool,
+            output=None,
+            user_input=user_input,
+            error=error,
+            digest_dates=[],
+            active_digest_date=None,
+            format_date_label=format_date_label,
+            max_input_chars=tool_max_chars,
+            output_history=[],
+            active_file=None,
+            raw_output=None,
+            active_context=active_context,
+            all_contexts=all_contexts,
+            prd_threads=[],
+            active_thread=None,
+            thread_versions=[],
+            prd_thread_label=prd_thread_label,
+            active_version=None,
+            analytics_sessions=analytics_sessions,
+            active_session=active_session,
+            analytics_session_label=analytics_session_label,
+            feedback_sessions=[],
+            active_feedback_session=None,
+            feedback_session_label=feedback_session_label,
+            csv_info=csv_info,
+        )
+
+    elif tool_id == "feedback":
+        # ── Feedback: conversational sessions ──────────────────────────────
+        tool_max_chars        = tool.get("max_chars", MAX_INPUT_CHARS)
+        feedback_sessions     = list_feedback_sessions()
+        active_feedback_session = None
+        csv_info              = ""  # populated when a CSV is preprocessed
+
+        if request.method == "POST":
+            action = request.form.get("action", "new_analysis")
+
+            if action == "followup":
+                session_id   = request.form.get("session_id", "").strip()
+                followup_msg = request.form.get("followup_message", "").strip()
+                session      = get_feedback_session(session_id) if session_id else None
+
+                if not followup_msg:
+                    error = "Please enter a follow-up question."
+                    active_feedback_session = session
+                elif not session:
+                    error = "Could not load the session."
+                else:
+                    prompt = build_feedback_followup_prompt(session, followup_msg)
+                    try:
+                        from config import CLAUDE_CMD
+                        result = subprocess.run(
+                            [CLAUDE_CMD, "--print"],
+                            input=prompt,
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            timeout=300,
+                        )
+                        if result.returncode != 0:
+                            error = f"Error: {result.stderr}"
+                            active_feedback_session = session
+                        else:
+                            append_feedback_turn(session_id, followup_msg, result.stdout.strip())
+                            active_feedback_session = get_feedback_session(session_id)
+                            feedback_sessions       = list_feedback_sessions()
+                    except subprocess.TimeoutExpired:
+                        error = "Claude took too long to respond."
+                        active_feedback_session = session
+                    except FileNotFoundError:
+                        error = "Claude CLI not found."
+                        active_feedback_session = session
+
+            else:
+                # New feedback analysis — file upload or textarea
+                uploaded_file = request.files.get("meeting_file")
+                if uploaded_file and uploaded_file.filename:
+                    try:
+                        raw_bytes = uploaded_file.read().decode("utf-8", errors="replace").strip()
+                        fname     = uploaded_file.filename
+                        if fname.lower().endswith(".csv"):
+                            user_input, csv_info = preprocess_csv(raw_bytes, fname)
+                        else:
+                            user_input = raw_bytes
+                    except Exception:
+                        error = "Could not read the uploaded file."
+                else:
+                    user_input = request.form.get("user_input", "").strip()
+
+                if not error:
+                    if len(user_input) > tool_max_chars:
+                        error = f"Input too long ({len(user_input):,} chars). Please trim to under {tool_max_chars:,}."
+                    elif user_input:
+                        try:
+                            response = run_claude(tool["prompt"], user_input, context=active_context)
+                            session_id            = save_feedback_session(user_input, response.strip())
+                            active_feedback_session = get_feedback_session(session_id)
+                            feedback_sessions     = list_feedback_sessions()
+                        except subprocess.TimeoutExpired:
+                            error = "Claude took too long to respond."
+                        except FileNotFoundError:
+                            error = "Claude CLI not found."
+        else:
+            requested_session = request.args.get("session")
+            if requested_session:
+                active_feedback_session = get_feedback_session(requested_session)
+
+        return render_template(
+            "index.html",
+            categories=CATEGORIES,
+            tools=TOOLS,
+            active_tool_id=tool_id,
+            tool=tool,
+            output=None,
+            user_input=user_input,
+            error=error,
+            digest_dates=[],
+            active_digest_date=None,
+            format_date_label=format_date_label,
+            max_input_chars=tool_max_chars,
+            output_history=[],
+            active_file=None,
+            raw_output=None,
+            active_context=active_context,
+            all_contexts=all_contexts,
+            prd_threads=[],
+            active_thread=None,
+            thread_versions=[],
+            prd_thread_label=prd_thread_label,
+            active_version=None,
+            analytics_sessions=[],
+            active_session=None,
+            analytics_session_label=analytics_session_label,
+            feedback_sessions=feedback_sessions,
+            active_feedback_session=active_feedback_session,
+            feedback_session_label=feedback_session_label,
+            csv_info=csv_info,
         )
 
     else:
@@ -715,6 +1257,15 @@ def index():
         thread_versions=[],
         prd_thread_label=prd_thread_label,
         active_version=None,
+        # Analytics (empty for non-analytics tools)
+        analytics_sessions=[],
+        active_session=None,
+        analytics_session_label=analytics_session_label,
+        # Feedback (empty for non-feedback tools)
+        feedback_sessions=[],
+        active_feedback_session=None,
+        feedback_session_label=feedback_session_label,
+        csv_info="",
     )
 
 

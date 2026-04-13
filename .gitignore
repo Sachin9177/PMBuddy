@@ -5,3 +5,5 @@ outputs/meetings/*.md
 inputs/email_config.txt
 data/contexts/*.json
 data/active_context.txt
+outputs/feedback/*.md
+outputs/analytics/*.md

@@ -61,6 +61,89 @@
                     </form>
                 </div>
 
+                {% elif active_tool_id == "feedback" %}
+
+                <!-- Feedback: conversational sessions -->
+                <div class="prd-toolbar">
+                    <select class="prd-history-select" onchange="if(this.value) window.location.href=this.value;"
+                            {% if not feedback_sessions %}disabled{% endif %}>
+                        <option value="">
+                            {% if feedback_sessions %}History ({{ feedback_sessions|length }} session{{ 's' if feedback_sessions|length != 1 else '' }}){% else %}No sessions yet{% endif %}
+                        </option>
+                        {% for s in feedback_sessions %}
+                        <option value="/?tool=feedback&session={{ s.id }}"
+                            {% if active_feedback_session and active_feedback_session.id == s.id %}selected{% endif %}>
+                            {{ feedback_session_label(s) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="/?tool=feedback" class="prd-new-btn">+ New Analysis</a>
+                </div>
+
+                {% if not active_feedback_session %}
+                <form method="POST" action="/?tool=feedback" id="main-form" enctype="multipart/form-data">
+                <div class="file-upload-row">
+                    <label class="file-upload-label" for="feedback-file">
+                        Upload file <span class="file-upload-hint">(.txt, .md, or .csv — App Store export, Intercom, Zendesk)</span>
+                    </label>
+                    <input type="file" id="feedback-file" name="meeting_file" accept=".txt,.md,.csv"
+                           class="file-input" onchange="handleFileSelect(this)" />
+                    <span id="file-name-display" class="file-name-display"></span>
+                </div>
+                <div class="file-divider"><span>or paste below</span></div>
+                <textarea
+                    name="user_input"
+                    rows="10"
+                    placeholder="{{ tool.placeholder }}"
+                    maxlength="{{ max_input_chars }}"
+                >{{ user_input }}</textarea>
+                <div class="char-counter" id="char-counter">0 / {{ "{:,}".format(max_input_chars) }}</div>
+                <button type="submit" id="submit-btn">Analyse Feedback</button>
+                </form>
+                {% endif %}
+
+                {% elif active_tool_id == "analytics" %}
+
+                <!-- Analytics: conversational sessions -->
+                <div class="prd-toolbar">
+                    <select class="prd-history-select" onchange="if(this.value) window.location.href=this.value;"
+                            {% if not analytics_sessions %}disabled{% endif %}>
+                        <option value="">
+                            {% if analytics_sessions %}History ({{ analytics_sessions|length }} session{{ 's' if analytics_sessions|length != 1 else '' }}){% else %}No sessions yet{% endif %}
+                        </option>
+                        {% for s in analytics_sessions %}
+                        <option value="/?tool=analytics&session={{ s.id }}"
+                            {% if active_session and active_session.id == s.id %}selected{% endif %}>
+                            {{ analytics_session_label(s) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="/?tool=analytics" class="prd-new-btn">+ New Analysis</a>
+                </div>
+
+                {% if not active_session %}
+                <!-- No session: show input form -->
+                <form method="POST" action="/?tool=analytics" id="main-form" enctype="multipart/form-data">
+                <div class="file-upload-row">
+                    <label class="file-upload-label" for="analytics-file">
+                        Upload data <span class="file-upload-hint">(.csv, .txt, .md — aggregated exports: daily metrics, funnel tables, retention cohorts)</span>
+                    </label>
+                    <input type="file" id="analytics-file" name="meeting_file" accept=".txt,.md,.csv"
+                           class="file-input" onchange="handleFileSelect(this)" />
+                    <span id="file-name-display" class="file-name-display"></span>
+                </div>
+                <div class="file-divider"><span>or describe below</span></div>
+                <textarea
+                    name="user_input"
+                    rows="10"
+                    placeholder="{{ tool.placeholder }}"
+                    maxlength="{{ max_input_chars }}"
+                >{{ user_input }}</textarea>
+                <div class="char-counter" id="char-counter">0 / {{ "{:,}".format(max_input_chars) }}</div>
+                <button type="submit" id="submit-btn">Analyse</button>
+                </form>
+                {% endif %}
+
                 {% elif active_tool_id == "prd" %}
 
                 <!-- PRD: toolbar with history dropdown + New PRD button -->
@@ -96,21 +179,21 @@
 
                 {% else %}
 
-                <!-- Other tools: chips history + textarea -->
-                {% if output_history %}
-                <div class="output-history-bar">
-                    <span class="output-history-label">Recent</span>
-                    <div class="output-history-tabs">
+                <!-- Other tools: dropdown history -->
+                <div class="prd-toolbar">
+                    <select class="prd-history-select" onchange="if(this.value) window.location.href=this.value;"
+                            {% if not output_history %}disabled{% endif %}>
+                        <option value="">
+                            {% if output_history %}History ({{ output_history|length }}){% else %}No history yet{% endif %}
+                        </option>
                         {% for filename, label in output_history %}
-                        <a href="/?tool={{ active_tool_id }}&file={{ filename }}"
-                           class="output-history-tab {% if filename == active_file %}active{% endif %}"
-                           title="{{ label }}">
+                        <option value="/?tool={{ active_tool_id }}&file={{ filename }}"
+                            {% if filename == active_file %}selected{% endif %}>
                             {{ label }}
-                        </a>
+                        </option>
                         {% endfor %}
-                    </div>
+                    </select>
                 </div>
-                {% endif %}
 
                 <form method="POST" action="/?tool={{ active_tool_id }}" id="main-form"
                       enctype="multipart/form-data">
@@ -139,6 +222,32 @@
                 <div class="file-divider"><span>or paste below</span></div>
                 {% endif %}
 
+                {% if active_tool_id == "feedback" %}
+                <!-- File upload for Feedback Analyzer -->
+                <div class="file-upload-row">
+                    <label class="file-upload-label" for="meeting-file">
+                        Upload file <span class="file-upload-hint">(.txt, .md, or .csv — e.g. App Store export, Intercom, Zendesk)</span>
+                    </label>
+                    <input type="file" id="meeting-file" name="meeting_file" accept=".txt,.md,.csv"
+                           class="file-input" onchange="handleFileSelect(this)" />
+                    <span id="file-name-display" class="file-name-display"></span>
+                </div>
+                <div class="file-divider"><span>or paste below</span></div>
+                {% endif %}
+
+                {% if active_tool_id == "analytics" %}
+                <!-- File upload for Analytics Assistant -->
+                <div class="file-upload-row">
+                    <label class="file-upload-label" for="meeting-file">
+                        Upload data <span class="file-upload-hint">(.csv, .txt, .md — aggregated exports work best: daily metrics, funnel tables, retention cohorts. Raw event logs won't work well.)</span>
+                    </label>
+                    <input type="file" id="meeting-file" name="meeting_file" accept=".txt,.md,.csv"
+                           class="file-input" onchange="handleFileSelect(this)" />
+                    <span id="file-name-display" class="file-name-display"></span>
+                </div>
+                <div class="file-divider"><span>or describe below</span></div>
+                {% endif %}
+
                 <textarea
                     name="user_input"
                     rows="10"
@@ -159,6 +268,87 @@
 
             {% if error %}
             <div class="error">{{ error }}</div>
+            {% endif %}
+
+            {% if csv_info %}
+            <div class="csv-info-strip">
+                <span class="csv-info-icon">⬡</span>
+                CSV preprocessed — {{ csv_info }}
+            </div>
+            {% endif %}
+
+            <!-- Feedback: conversational chat render -->
+            {% if active_tool_id == "feedback" and active_feedback_session %}
+            <div class="analytics-chat feedback-chat">
+                {% for msg in active_feedback_session.messages %}
+                {% if msg.role == "user" %}
+                <div class="chat-user-turn">
+                    <div class="chat-turn-label">You</div>
+                    <div class="chat-user-msg">{{ msg.content }}</div>
+                </div>
+                {% else %}
+                <div class="chat-assistant-turn">
+                    <div class="chat-turn-label">Analysis</div>
+                    <div class="chat-assistant-msg rendered-md">{{ msg.content | md_render | safe }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div class="refine-section">
+                <div class="refine-header">
+                    <span class="refine-title">Ask a follow-up</span>
+                    <span class="refine-hint">Dig deeper, filter by segment, or ask for product recommendations</span>
+                </div>
+                <form method="POST" action="/?tool=feedback" id="feedback-followup-form">
+                    <input type="hidden" name="action" value="followup" />
+                    <input type="hidden" name="session_id" value="{{ active_feedback_session.id }}" />
+                    <textarea
+                        name="followup_message"
+                        rows="3"
+                        placeholder="e.g. Focus only on enterprise users. Which pain points map to our roadmap? Draft a Slack update summarising the top 3 findings."
+                        class="refine-input"
+                    ></textarea>
+                    <button type="submit" class="refine-btn" id="feedback-followup-btn">Ask</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Analytics: conversational chat render -->
+            {% if active_tool_id == "analytics" and active_session %}
+            <div class="analytics-chat">
+                {% for msg in active_session.messages %}
+                {% if msg.role == "user" %}
+                <div class="chat-user-turn">
+                    <div class="chat-turn-label">You</div>
+                    <div class="chat-user-msg">{{ msg.content }}</div>
+                </div>
+                {% else %}
+                <div class="chat-assistant-turn">
+                    <div class="chat-turn-label">Analysis</div>
+                    <div class="chat-assistant-msg rendered-md">{{ msg.content | md_render | safe }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Follow-up form -->
+            <div class="refine-section">
+                <div class="refine-header">
+                    <span class="refine-title">Ask a follow-up</span>
+                    <span class="refine-hint">Dig deeper, change the frame, or ask for specific next steps</span>
+                </div>
+                <form method="POST" action="/?tool=analytics" id="followup-form">
+                    <input type="hidden" name="action" value="followup" />
+                    <input type="hidden" name="session_id" value="{{ active_session.id }}" />
+                    <textarea
+                        name="followup_message"
+                        rows="3"
+                        placeholder="e.g. Focus only on mobile users. What SQL would confirm hypothesis 2? Summarise this for my eng lead in 3 bullets."
+                        class="refine-input"
+                    ></textarea>
+                    <button type="submit" class="refine-btn" id="followup-btn">Ask</button>
+                </form>
+            </div>
             {% endif %}
 
             {% if output %}
@@ -294,7 +484,7 @@
                 });
             }
 
-            // ── Refine form: disable button + loading state on submit ──
+            // ── Refine form (PRD): disable button + loading state on submit ──
             const refineForm = document.getElementById("refine-form");
             const refineBtn  = document.getElementById("refine-btn");
             if (refineForm && refineBtn) {
@@ -307,6 +497,25 @@
                     if (loadingMsg) { loadingMsg.textContent = "Refining — this can take up to 90 seconds..."; }
                 });
             }
+
+            // ── Follow-up forms (Analytics + Feedback): disable + loading state ──
+            [
+                { formId: "followup-form",          btnId: "followup-btn",          msg: "Analysing — this can take up to 90 seconds..." },
+                { formId: "feedback-followup-form", btnId: "feedback-followup-btn", msg: "Analysing — this can take up to 90 seconds..." },
+            ].forEach(function(cfg) {
+                const form = document.getElementById(cfg.formId);
+                const btn  = document.getElementById(cfg.btnId);
+                if (form && btn) {
+                    form.addEventListener("submit", function () {
+                        btn.disabled = true;
+                        btn.textContent = "Thinking...";
+                        const loadingEl  = document.getElementById("loading-state");
+                        const loadingMsg = document.getElementById("loading-msg");
+                        if (loadingEl)  { loadingEl.style.display = "flex"; }
+                        if (loadingMsg) { loadingMsg.textContent = cfg.msg; }
+                    });
+                }
+            });
 
             if (textarea && counter) {
                 function updateCounter() {
